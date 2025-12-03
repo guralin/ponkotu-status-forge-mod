@@ -1,0 +1,27 @@
+{
+  "id": "ponkotu-system",
+  "title": "Ponkotu System",
+  "description": "Utilities and React form window for ponkotu system.",
+  "version": "0.1.0",
+  "compatibility": {
+    "minimum": "11",
+    "verified": "11"
+  },
+  "authors": [
+    {
+      "name": "Unknown"
+    }
+  ],
+  "scripts": ["scripts/debug-log.js"],
+  "esmodules": ["dist/index.js"],
+  "styles": [],
+  "languages": [],
+  "packs": [],
+  "relationships": {},
+  "scripts": [],
+  "templates": ["templates/react-form.html"],
+  "socket": false,
+  "manifest": "",
+  "download": "",
+  "license": "MIT"
+}
