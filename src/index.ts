@@ -1,4 +1,5 @@
 import { ReactFormApplication } from "./application/ReactFormApplication";
+import { DamageCalcApplication } from "./application/DamageCalcApplication";
 
 const MODULE_ID = "ponkotu-system";
 const log = (...args: unknown[]) => console.log(`[${MODULE_ID}]`, ...args);
@@ -6,6 +7,7 @@ const log = (...args: unknown[]) => console.log(`[${MODULE_ID}]`, ...args);
 log("ES module loaded");
 
 export const showReactForm = () => new ReactFormApplication().render(true);
+export const showDamageCalc = () => new DamageCalcApplication().render(true);
 
 const registerApi = () => {
   const module = game.modules.get(MODULE_ID);
@@ -17,6 +19,7 @@ const registerApi = () => {
   const target = module as unknown as { api?: Record<string, unknown> };
   if (!target.api) target.api = {};
   target.api.showReactForm = showReactForm;
+  target.api.showDamageCalc = showDamageCalc;
   log("API を登録しました", target.api);
 };
 
@@ -26,8 +29,11 @@ Hooks.once("ready", () => {
 
   // デバッグ用にグローバルへも公開
   (globalThis as typeof globalThis & {
-    ponkotuSystem?: { showReactForm: typeof showReactForm };
-  }).ponkotuSystem = { showReactForm };
+    ponkotuSystem?: {
+      showReactForm: typeof showReactForm;
+      showDamageCalc: typeof showDamageCalc;
+    };
+  }).ponkotuSystem = { showReactForm, showDamageCalc };
 
   log("React フォーム API を初期化しました");
 });

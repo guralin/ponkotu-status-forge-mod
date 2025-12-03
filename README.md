@@ -6,6 +6,7 @@
 
 ## ドキュメント
 - React フォームウィンドウ実装メモ: docs/react-form.md
+- ダメージ計算ウィンドウ: docs/damage-calc-window.md
 
 ## モジュールの反映方法
 1. このフォルダを Foundry の `Data/modules/ponkotu-system` として配置する（または symlink）。

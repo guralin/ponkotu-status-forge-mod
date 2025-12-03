@@ -19,7 +19,7 @@
   "packs": [],
   "relationships": {},
   "scripts": [],
-  "templates": ["templates/react-form.html"],
+  "templates": ["templates/react-form.html", "templates/damage-calc.html"],
   "socket": false,
   "manifest": "",
   "download": "",

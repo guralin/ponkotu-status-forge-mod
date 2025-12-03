@@ -13,7 +13,7 @@ export class ReactFormApplication extends Application {
       title: "React フォーム",
       template: `modules/${MODULE_ID}/templates/react-form.html`,
       width: 420,
-      height: "auto",
+      height: 400,
       resizable: true,
     });
   }
