@@ -6,6 +6,10 @@ const MODULE_ID = "ponkotu-system";
 export class DamageCalcApplication extends Application {
   #root: ReactDOM.Root | null = null;
 
+  #isPlayer(actor: Actor): boolean {
+    return Boolean((actor.system as any)?.attributes?.isPlayer?.value ?? 0);
+  }
+
   static override get defaultOptions() {
     const options = super.defaultOptions;
     return foundry.utils.mergeObject(options, {
@@ -13,7 +17,7 @@ export class DamageCalcApplication extends Application {
       title: "ダメージ計算",
       template: `modules/${MODULE_ID}/templates/damage-calc.html`,
       width: 520,
-      height: "auto",
+      height: 400,
       resizable: true,
     });
   }
@@ -34,6 +38,7 @@ export class DamageCalcApplication extends Application {
         id: t.id ?? crypto.randomUUID(),
         name: t.name ?? t.actor?.name ?? "unknown",
         actor: t.actor as Actor,
+        isPlayer: this.#isPlayer(t.actor as Actor),
       }));
 
     this.#root = ReactDOM.createRoot(container);

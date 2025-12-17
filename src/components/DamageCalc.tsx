@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   calculateAndApplyDamage,
   type DamageResult,
@@ -8,6 +8,7 @@ export type TokenOption = {
   id: string;
   name: string;
   actor: Actor;
+  isPlayer: boolean;
 };
 
 type Props = {
@@ -17,9 +18,23 @@ type Props = {
 const formatNumber = (value: number) =>
   Number.isFinite(value) ? value.toLocaleString() : "-";
 
+const pickDefaultAttacker = (list: TokenOption[]) =>
+  list.find((token) => token.isPlayer)?.id ?? list[0]?.id ?? "";
+
+const pickDefaultReceiver = (list: TokenOption[], attackerId: string) =>
+  list.find((token) => token.id !== attackerId && !token.isPlayer)?.id ??
+  list.find((token) => token.id !== attackerId)?.id ??
+  "";
+
+const optionLabel = (token: TokenOption) =>
+  `${token.name} ${token.isPlayer ? "(プレイヤー)" : "(エネミー)"}`;
+
 export const DamageCalc = ({ tokens }: Props) => {
-  const [attackerId, setAttackerId] = useState<string>(tokens[0]?.id ?? "");
-  const [receiverId, setReceiverId] = useState<string>(tokens[1]?.id ?? "");
+  const defaultAttackerId = pickDefaultAttacker(tokens);
+  const [attackerId, setAttackerId] = useState<string>(defaultAttackerId);
+  const [receiverId, setReceiverId] = useState<string>(
+    pickDefaultReceiver(tokens, defaultAttackerId)
+  );
   const [baseDamage, setBaseDamage] = useState<string>("");
   const [result, setResult] = useState<DamageResult | null>(null);
   const [running, setRunning] = useState(false);
@@ -29,6 +44,32 @@ export const DamageCalc = ({ tokens }: Props) => {
     tokens.forEach((t) => map.set(t.id, t));
     return map;
   }, [tokens]);
+
+  useEffect(() => {
+    if (!tokens.length) {
+      if (attackerId) setAttackerId("");
+      if (receiverId) setReceiverId("");
+      return;
+    }
+
+    const validIds = new Set(tokens.map((t) => t.id));
+    let nextAttackerId = attackerId;
+    if (!nextAttackerId || !validIds.has(nextAttackerId)) {
+      nextAttackerId = pickDefaultAttacker(tokens);
+    }
+
+    let nextReceiverId = receiverId;
+    if (
+      !nextReceiverId ||
+      !validIds.has(nextReceiverId) ||
+      nextReceiverId === nextAttackerId
+    ) {
+      nextReceiverId = pickDefaultReceiver(tokens, nextAttackerId);
+    }
+
+    if (nextAttackerId !== attackerId) setAttackerId(nextAttackerId);
+    if (nextReceiverId !== receiverId) setReceiverId(nextReceiverId);
+  }, [tokens, attackerId, receiverId]);
 
   const handleRun = async () => {
     const base = Number(baseDamage);
@@ -79,7 +120,7 @@ export const DamageCalc = ({ tokens }: Props) => {
             <option value="">選択してください</option>
             {tokens.map((token) => (
               <option key={token.id} value={token.id}>
-                {token.name}
+                {optionLabel(token)}
               </option>
             ))}
           </select>
@@ -94,7 +135,7 @@ export const DamageCalc = ({ tokens }: Props) => {
             <option value="">選択してください</option>
             {tokens.map((token) => (
               <option key={token.id} value={token.id}>
-                {token.name}
+                {optionLabel(token)}
               </option>
             ))}
           </select>
