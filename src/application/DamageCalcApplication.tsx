@@ -1,5 +1,5 @@
 import ReactDOM from "react-dom/client";
-import { DamageCalc, type TokenOption } from "../components/DamageCalc";
+import { DamageCalc } from "../components/DamageCalc";
 
 const MODULE_ID = "ponkotu-system";
 
@@ -13,7 +13,7 @@ export class DamageCalcApplication extends Application {
       title: "ダメージ計算",
       template: `modules/${MODULE_ID}/templates/damage-calc.html`,
       width: 520,
-      height: "auto",
+      height: 400,
       resizable: true,
     });
   }
@@ -28,16 +28,8 @@ export class DamageCalcApplication extends Application {
       return;
     }
 
-    const tokens: TokenOption[] = (canvas.tokens?.placeables ?? [])
-      .filter((t) => !!t.actor)
-      .map((t) => ({
-        id: t.id ?? crypto.randomUUID(),
-        name: t.name ?? t.actor?.name ?? "unknown",
-        actor: t.actor as Actor,
-      }));
-
     this.#root = ReactDOM.createRoot(container);
-    this.#root.render(<DamageCalc tokens={tokens} />);
+    this.#root.render(<DamageCalc />);
   }
 
   override async close(options?: Application.CloseOptions | undefined) {
