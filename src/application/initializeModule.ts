@@ -1,6 +1,5 @@
 import { DamageCalcApplication } from "./DamageCalcApplication";
 import { ReactFormApplication } from "./ReactFormApplication";
-import { registerCombatTurnHooks } from "./event/registerCombatTurnHooks";
 
 const MODULE_ID = "ponkotu-system";
 const log = (...args: unknown[]) => console.log(`[${MODULE_ID}]`, ...args);
@@ -28,7 +27,6 @@ export const initializePonkotuSystem = () => {
   Hooks.once("ready", () => {
     log("Hooks.once ready fired");
     registerApi();
-    registerCombatTurnHooks();
 
     // デバッグ用にグローバルへも公開
     (globalThis as typeof globalThis & {
