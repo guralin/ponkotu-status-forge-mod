@@ -59,12 +59,8 @@ describe("TurnProcessor", () => {
     });
     const combatant = createCombatant({ hp: 100, statuses });
 
-    const events = TurnProcessor.turnEnd(combatant);
-    const damageReasons = events
-      .filter((event) => event.type === "damage-applied")
-      .map((event) => event.reason);
+    TurnProcessor.turnEnd(combatant);
 
-    expect(damageReasons).toEqual(["DarkFire", "Burned"]);
     expect(combatant.hp).toBe(85);
     expect(combatant.statuses.getStack("DarkFire")).toBe(0);
     expect(combatant.statuses.getStack("Burned")).toBe(3);

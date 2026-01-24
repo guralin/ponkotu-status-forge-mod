@@ -7,14 +7,14 @@ const decayHalf = (value: number) => decayByRatio(value, 1 / 2);
 const resetOnTurnEnd = (ctx: StatusContext) => {
   const stack = ctx.getStack(ctx.statusId);
   if (stack > 0) {
-    ctx.setStack(ctx.statusId, 0, "turn-end-reset");
+    ctx.setStack(ctx.statusId, 0);
   }
 };
 
-const decrementOnTurnEnd = (ctx: StatusContext, reason: string) => {
+const decrementOnTurnEnd = (ctx: StatusContext) => {
   const stack = ctx.getStack(ctx.statusId);
   if (stack > 0) {
-    ctx.setStack(ctx.statusId, decrementStack(stack), reason);
+    ctx.setStack(ctx.statusId, decrementStack(stack));
   }
 };
 
@@ -24,15 +24,15 @@ export const statusDefinitions = [
     onTurnStart: (ctx) => {
       const stack = ctx.getStack(ctx.statusId);
       if (stack > 0) {
-        ctx.setStack(ctx.statusId, 0, "turn-start-reset");
+        ctx.setStack(ctx.statusId, 0);
       }
     },
     onTurnEnd: (ctx) => {
       const darkFire = ctx.getStack(ctx.statusId);
       const burned = ctx.getStack("Burned");
       if (darkFire > 0 && burned > 0) {
-        ctx.applyHpDamage(darkFire * burned, "DarkFire");
-        ctx.setStack(ctx.statusId, 0, "turn-end-consume");
+        ctx.applyHpDamage(darkFire * burned);
+        ctx.setStack(ctx.statusId, 0);
       }
     },
   },
@@ -42,8 +42,8 @@ export const statusDefinitions = [
     onTurnEnd: (ctx) => {
       const stack = ctx.getStack(ctx.statusId);
       if (stack <= 0) return;
-      ctx.applyHpDamage(stack, "Burned");
-      ctx.setStack(ctx.statusId, decayTwoThirds(stack), "turn-end-decay");
+      ctx.applyHpDamage(stack);
+      ctx.setStack(ctx.statusId, decayTwoThirds(stack));
     },
   },
   {
@@ -52,8 +52,8 @@ export const statusDefinitions = [
     onTurnEnd: (ctx) => {
       const stack = ctx.getStack(ctx.statusId);
       if (stack <= 0) return;
-      ctx.applyHpDamage(stack, "Poison");
-      ctx.setStack(ctx.statusId, decayHalf(stack), "turn-end-decay");
+      ctx.applyHpDamage(stack);
+      ctx.setStack(ctx.statusId, decayHalf(stack));
     },
   },
   {
@@ -62,8 +62,8 @@ export const statusDefinitions = [
     onTurnEnd: (ctx) => {
       const stack = ctx.getStack(ctx.statusId);
       if (stack <= 0) return;
-      ctx.applyHpDamage(stack, "Tremor");
-      ctx.setStack(ctx.statusId, decayTwoThirds(stack), "turn-end-decay");
+      ctx.applyHpDamage(stack);
+      ctx.setStack(ctx.statusId, decayTwoThirds(stack));
     },
   },
   {
@@ -72,13 +72,13 @@ export const statusDefinitions = [
     onTurnEnd: (ctx) => {
       const stack = ctx.getStack(ctx.statusId);
       if (stack <= 0) return;
-      ctx.setStack(ctx.statusId, decayTwoThirds(stack), "turn-end-decay");
+      ctx.setStack(ctx.statusId, decayTwoThirds(stack));
     },
   },
   {
     id: "Poise",
     hasPending: true,
-    onTurnEnd: (ctx) => decrementOnTurnEnd(ctx, "turn-end-decay"),
+    onTurnEnd: (ctx) => decrementOnTurnEnd(ctx),
   },
   {
     id: "Regen",
@@ -88,10 +88,10 @@ export const statusDefinitions = [
       if (stack <= 0) return;
       const amount = ctx.combatant.maxHp * 0.05 * stack;
       if (amount > 0) {
-        ctx.healHp(amount, "Regen");
+        ctx.healHp(amount);
       }
     },
-    onTurnEnd: (ctx) => decrementOnTurnEnd(ctx, "turn-end-decay"),
+    onTurnEnd: (ctx) => decrementOnTurnEnd(ctx),
   },
   {
     id: "Bind",
@@ -135,7 +135,7 @@ export const statusDefinitions = [
       if (!ctx.combatant.flags.checkHitan) return;
       const stack = ctx.getStack(ctx.statusId);
       if (stack <= 1) {
-        ctx.setStack(ctx.statusId, 1, "turn-start-check-hitan");
+        ctx.setStack(ctx.statusId, 1);
       }
     },
     onTurnEnd: resetOnTurnEnd,
@@ -151,18 +151,18 @@ export const statusDefinitions = [
     onTurnEnd: (ctx) => {
       const stack = ctx.getStack(ctx.statusId);
       if (ctx.combatant.flags.checkNk) {
-        ctx.addStack(ctx.statusId, 2, "turn-end-check-nk");
+        ctx.addStack(ctx.statusId, 2);
         return;
       }
       if (stack > 0) {
-        ctx.setStack(ctx.statusId, decrementStack(stack), "turn-end-decay");
+        ctx.setStack(ctx.statusId, decrementStack(stack));
       }
     },
   },
   {
     id: "FEOAwaken",
     hasPending: true,
-    onTurnEnd: (ctx) => decrementOnTurnEnd(ctx, "turn-end-decay"),
+    onTurnEnd: (ctx) => decrementOnTurnEnd(ctx),
   },
   {
     id: "Witch1",
@@ -171,7 +171,7 @@ export const statusDefinitions = [
       if (stack <= 0) return;
       const amount = stack * ctx.combatant.hp * 0.02;
       if (amount > 0) {
-        ctx.applyHpDamage(amount, "Witch1");
+        ctx.applyHpDamage(amount);
       }
     },
   },
@@ -180,8 +180,8 @@ export const statusDefinitions = [
     onTurnStart: (ctx) => {
       const stack = ctx.getStack(ctx.statusId);
       if (stack <= 0) return;
-      ctx.addStack("DamageUp", stack, "turn-start-frenzy");
-      ctx.addStack("Vulnerable", stack, "turn-start-frenzy");
+      ctx.addStack("DamageUp", stack);
+      ctx.addStack("Vulnerable", stack);
     },
   },
   {
@@ -189,14 +189,14 @@ export const statusDefinitions = [
     onTurnStart: (ctx) => {
       const stack = ctx.getStack(ctx.statusId);
       if (stack > 0) {
-        ctx.addStack("DamageUp", stack, "turn-start-sinsyoku");
+        ctx.addStack("DamageUp", stack);
       }
     },
     onTurnEnd: (ctx) => {
       const stack = ctx.getStack(ctx.statusId);
       if (stack >= 3 && !ctx.combatant.flags.checkAnri) {
-        ctx.applyHpDamage(stack, "Sinsyoku");
-        ctx.applyConstitutionDamage(stack, "Sinsyoku");
+        ctx.applyHpDamage(stack);
+        ctx.applyConstitutionDamage(stack);
       }
     },
   },
