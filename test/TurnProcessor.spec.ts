@@ -88,4 +88,15 @@ describe("TurnProcessor", () => {
     expect(combatant.statuses.getStack("Regen")).toBe(1);
     expect(combatant.hp).toBe(60);
   });
+
+  it("Sink は checkNk のとき stack が +2 される", () => {
+    const statuses = new StatusSet({
+      Sink: { stack: 3, pending: 0 },
+    });
+    const combatant = createCombatant({ statuses, flags: { checkNk: true } });
+
+    TurnProcessor.turnEnd(combatant);
+
+    expect(combatant.statuses.getStack("Sink")).toBe(5);
+  });
 });

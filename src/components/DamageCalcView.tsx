@@ -39,7 +39,7 @@ export const DamageCalcView = ({
         <select value={attackerId} onChange={(e) => onAttackerChange(e.target.value)}>
           <option value="">選択してください</option>
           {tokens.map((token) => (
-            <option key={token.id} value={token.id}>
+            <option key={token.actorId} value={token.actorId}>
               {optionLabel(token)}
             </option>
           ))}
@@ -51,7 +51,7 @@ export const DamageCalcView = ({
         <select value={receiverId} onChange={(e) => onReceiverChange(e.target.value)}>
           <option value="">選択してください</option>
           {tokens.map((token) => (
-            <option key={token.id} value={token.id}>
+            <option key={token.actorId} value={token.actorId}>
               {optionLabel(token)}
             </option>
           ))}

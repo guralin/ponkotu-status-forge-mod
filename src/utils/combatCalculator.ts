@@ -1,6 +1,28 @@
+export type DamageActor = {
+  name?: string;
+  isPlayer: boolean;
+  stackDamageUp: number;
+  stackDamageDown: number;
+  directcheck: boolean;
+  criticalcheck: boolean;
+  stackPoise: number;
+  stackProtection: number;
+  stackVulnerable: number;
+  resist: number;
+  resistEnemy: number;
+  confResist: number;
+  econfResistEnemy: number;
+  hp: number;
+  barrier: number;
+  constitution: number;
+  san: number;
+  doubleConstitution: boolean;
+  stacksink: number;
+};
+
 export type DamageInput = {
-  attacker: Actor;
-  receiver: Actor;
+  attacker: DamageActor;
+  receiver: DamageActor;
   baseDamage: number;
 };
 
@@ -26,31 +48,27 @@ export type DamageResult = {
   sanAfter: number;
 };
 
-const getAttr = (actor: Actor, key: string, defaultValue = 0): number => {
-  const value = (actor.system as any)?.attributes?.[key]?.value;
-  return value ?? defaultValue;
-};
-
-const calcAttackerNormal = (attacker: Actor): number => {
-  const up = getAttr(attacker, "stackDamageUp", 0);
-  const down = getAttr(attacker, "stackDamageDown", 0);
-  const isDirect = !!getAttr(attacker, "directcheck", 0);
+const calcAttackerNormal = (attacker: DamageActor): number => {
+  const up = attacker.stackDamageUp;
+  const down = attacker.stackDamageDown;
+  const isDirect = attacker.directcheck;
   return up * 10 - down * 10 + (isDirect ? 50 : 0);
 };
 
 const calcAttackerSpecial = (
-  attacker: Actor
+  attacker: DamageActor,
+  random: () => number
 ): { special: number; poiseCritical: boolean } => {
   let special = 0;
   let poiseCritical = false;
 
-  const isCritical = !!getAttr(attacker, "criticalcheck", 0);
+  const isCritical = attacker.criticalcheck;
   if (isCritical) special += 20;
 
-  const stackPoise = getAttr(attacker, "stackpoise", 0);
+  const stackPoise = attacker.stackPoise;
   if (stackPoise > 0) {
     const chance = Math.min(stackPoise * 5, 100);
-    const roll = Math.random() * 100;
+    const roll = random() * 100;
     if (roll < chance) {
       special += 20;
       poiseCritical = true;
@@ -60,36 +78,40 @@ const calcAttackerSpecial = (
   return { special, poiseCritical };
 };
 
-const calcReceiverNormal = (receiver: Actor): number => {
-  const protection = getAttr(receiver, "stackProtection", 0);
-  const vulnerable = getAttr(receiver, "stackVulnerable", 0);
+const calcReceiverNormal = (receiver: DamageActor): number => {
+  const protection = receiver.stackProtection;
+  const vulnerable = receiver.stackVulnerable;
   return protection * 10 - vulnerable * 10;
 };
 
-const calcReceiverSpecial = (receiver: Actor): number => {
-  const isPlayer = !!getAttr(receiver, "isPlayer", 0);
-  const resistance = isPlayer
-    ? getAttr(receiver, "resist", 0)
-    : getAttr(receiver, "resistEnemy", 0);
+const calcReceiverSpecial = (receiver: DamageActor): number => {
+  const resistance = receiver.isPlayer ? receiver.resist : receiver.resistEnemy;
 
-  if (getAttr(receiver, "constitution", 0) <= 0) return -100;
+  if (receiver.constitution <= 0) return -100;
   return resistance;
 };
 
-const calcReceiverSpecialConf = (receiver: Actor): number => {
-  const isPlayer = !!getAttr(receiver, "isPlayer", 0);
-  const resistance = isPlayer
-    ? getAttr(receiver, "confResist", 0)
-    : getAttr(receiver, "econfResistEnemy", 0);
+const calcReceiverSpecialConf = (receiver: DamageActor): number => {
+  const resistance = receiver.isPlayer
+    ? receiver.confResist
+    : receiver.econfResistEnemy;
 
-  if (getAttr(receiver, "constitution", 0) <= 0) return -100;
+  if (receiver.constitution <= 0) return -100;
   return resistance;
 };
 
-export const computeDamage = (input: DamageInput) => {
+export type DamageCalcOptions = {
+  random?: () => number;
+};
+
+export const computeDamage = (
+  input: DamageInput,
+  options: DamageCalcOptions = {}
+) => {
+  const random = options.random ?? Math.random;
   const attackerNormalPercentage = calcAttackerNormal(input.attacker);
   const { special: attackerSpecialPercentage, poiseCritical } =
-    calcAttackerSpecial(input.attacker);
+    calcAttackerSpecial(input.attacker, random);
   const receiverNormalPercentage = calcReceiverNormal(input.receiver);
   const receiverSpecialPercentage = calcReceiverSpecial(input.receiver);
   const receiverSpecialConfPercentage = calcReceiverSpecialConf(input.receiver);
@@ -121,18 +143,18 @@ export const computeDamage = (input: DamageInput) => {
   };
 };
 
-export const applyDamage = async (
+export const applyDamage = (
   input: DamageInput,
   calc: ReturnType<typeof computeDamage>
-): Promise<DamageResult> => {
+): { result: DamageResult; receiver: DamageActor } => {
   const receiver = input.receiver;
-  const updates: Record<string, number> = {};
 
-  let hp = getAttr(receiver, "hp", 0);
-  let barrier = getAttr(receiver, "barrier", 0);
-  let constitution = getAttr(receiver, "constitution", 0);
-  let san = getAttr(receiver, "san", 0);
-  const isDoubleConstitution = getAttr(receiver, "doubleconstitution", 0) === 1;
+  let hp = receiver.hp;
+  let barrier = receiver.barrier;
+  let constitution = receiver.constitution;
+  let san = receiver.san;
+  let nextStacksink = receiver.stacksink;
+  const isDoubleConstitution = receiver.doubleConstitution;
 
   const hpDamageCeil = Math.ceil(calc.dealDamage);
   const confDamageCeil = Math.ceil(calc.dealConfDamage);
@@ -159,7 +181,7 @@ export const applyDamage = async (
   }
 
   let sanDamageApplied = 0;
-  const sink = getAttr(receiver, "stacksink", 0);
+  const sink = receiver.stacksink;
   if (sink > 0) {
     let sinkDamage = sink;
     const sanAbsorbed = Math.min(san, sinkDamage);
@@ -172,15 +194,8 @@ export const applyDamage = async (
       hpDamageApplied += sinkDamage;
     }
 
-    updates["system.attributes.stacksink.value"] = Math.floor(sink / 2);
+    nextStacksink = Math.floor(sink / 2);
   }
-
-  updates["system.attributes.hp.value"] = hp;
-  updates["system.attributes.barrier.value"] = barrier;
-  updates["system.attributes.constitution.value"] = constitution;
-  updates["system.attributes.san.value"] = san;
-
-  await receiver.update(updates);
 
   const result: DamageResult = {
     ...calc,
@@ -194,25 +209,14 @@ export const applyDamage = async (
     sanAfter: san,
   };
 
-  const content = `
-${input.attacker.name} → ${input.receiver.name}<br/>
-基礎ダメージ: ${input.baseDamage}<br/>
-HPダメージ: ${hpDamageApplied} (バリア吸収: ${barrierAbsorbed})<br/>
-耐性限界ダメージ: ${confDamageApplied}<br/>
-SANダメージ(沈潜): ${sanDamageApplied}<br/>
-`;
+  const nextReceiver: DamageActor = {
+    ...receiver,
+    hp,
+    barrier,
+    constitution,
+    san,
+    stacksink: nextStacksink,
+  };
 
-  await ChatMessage.create({
-    speaker: ChatMessage.getSpeaker({ actor: input.attacker }),
-    content,
-  });
-
-  return result;
-};
-
-export const calculateAndApplyDamage = async (
-  input: DamageInput
-): Promise<DamageResult> => {
-  const calc = computeDamage(input);
-  return applyDamage(input, calc);
+  return { result, receiver: nextReceiver };
 };

@@ -1,13 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  calculateAndApplyDamage,
-  type DamageResult,
-} from "../utils/combatCalculator";
+import { DamageActorRepository } from "../repository/DamageActorRepository";
+import { applyDamage, computeDamage, type DamageResult } from "../utils/combatCalculator";
 
 export type TokenOption = {
-  id: string;
+  actorId: string;
   name: string;
-  actor: Actor;
   isPlayer: boolean;
 };
 
@@ -17,20 +14,21 @@ const isPlayerActor = (actor: Actor): boolean =>
 
 const buildTokenOptions = (): TokenOption[] =>
   (canvas?.tokens?.placeables ?? [])
-    .filter((token) => !!token.actor)
+    .filter((token) => !!token.actor?.id)
     .map((token) => ({
-      id: token.id ?? crypto.randomUUID(),
+      actorId: token.actor?.id ?? "",
       name: token.name ?? token.actor?.name ?? "unknown",
-      actor: token.actor as Actor,
       isPlayer: isPlayerActor(token.actor as Actor),
-    }));
+    }))
+    .filter((token) => token.actorId);
 
 const pickDefaultAttacker = (list: TokenOption[]) =>
-  list.find((token) => token.isPlayer)?.id ?? list[0]?.id ?? "";
+  list.find((token) => token.isPlayer)?.actorId ?? list[0]?.actorId ?? "";
 
 const pickDefaultReceiver = (list: TokenOption[], attackerId: string) =>
-  list.find((token) => token.id !== attackerId && !token.isPlayer)?.id ??
-  list.find((token) => token.id !== attackerId)?.id ??
+  list.find((token) => token.actorId !== attackerId && !token.isPlayer)
+    ?.actorId ??
+  list.find((token) => token.actorId !== attackerId)?.actorId ??
   "";
 
 export type DamageCalcState = {
@@ -60,7 +58,7 @@ export const useDamageCalcState = (): DamageCalcState => {
 
   const tokenMap = useMemo(() => {
     const map = new Map<string, TokenOption>();
-    tokens.forEach((t) => map.set(t.id, t));
+    tokens.forEach((t) => map.set(t.actorId, t));
     return map;
   }, [tokens]);
 
@@ -71,7 +69,7 @@ export const useDamageCalcState = (): DamageCalcState => {
       return;
     }
 
-    const validIds = new Set(tokens.map((t) => t.id));
+    const validIds = new Set(tokens.map((t) => t.actorId));
     let nextAttackerId = attackerId;
     if (!nextAttackerId || !validIds.has(nextAttackerId)) {
       nextAttackerId = pickDefaultAttacker(tokens);
@@ -103,17 +101,44 @@ export const useDamageCalcState = (): DamageCalcState => {
       ui.notifications?.error("攻撃者と防御者を選択してください");
       return;
     }
-    if (attacker.id === receiver.id) {
+    if (attackerId === receiverId) {
       ui.notifications?.error("攻撃者と防御者は別のキャラクターを選んでください");
       return;
     }
 
     try {
       setRunning(true);
-      const calcResult = await calculateAndApplyDamage({
-        attacker: attacker.actor,
-        receiver: receiver.actor,
+      const repository = new DamageActorRepository();
+      const attackerRecord = repository.load(attackerId);
+      const receiverRecord = repository.load(receiverId);
+      if (!attackerRecord || !receiverRecord) {
+        ui.notifications?.error("攻撃者または防御者のデータを取得できませんでした");
+        return;
+      }
+      const calc = computeDamage({
+        attacker: attackerRecord.snapshot,
+        receiver: receiverRecord.snapshot,
         baseDamage: base,
+      });
+      const { result: calcResult, receiver: nextReceiver } = applyDamage(
+        {
+          attacker: attackerRecord.snapshot,
+          receiver: receiverRecord.snapshot,
+          baseDamage: base,
+        },
+        calc
+      );
+      await repository.saveReceiver(receiverRecord.actorId, nextReceiver);
+      const content = `
+${attacker.name} → ${receiver.name}<br/>
+基礎ダメージ: ${base}<br/>
+HPダメージ: ${calcResult.hpDamageApplied} (バリア吸収: ${calcResult.barrierAbsorbed})<br/>
+耐性限界ダメージ: ${calcResult.confDamageApplied}<br/>
+SANダメージ(沈潜): ${calcResult.sanDamageApplied}<br/>
+`;
+      await ChatMessage.create({
+        speaker: ChatMessage.getSpeaker({ actor: attackerRecord.actor }),
+        content,
       });
       setResult(calcResult);
       ui.notifications?.info(
