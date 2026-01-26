@@ -3,21 +3,31 @@ import { Combatant } from "../src/domain/combat/Combatant";
 import { TurnProcessor } from "../src/domain/combat/TurnProcessor";
 import { StatusSet } from "../src/domain/status/StatusSet";
 
-const createCombatant = (overrides?: {
-  hp?: number;
-  maxHp?: number;
-  barrier?: number;
-  constitution?: number;
-  statuses?: StatusSet;
-  flags?: { checkNk?: boolean; checkAnri?: boolean; checkHitan?: boolean };
-}) =>
+const createCombatant = (overrides?: Partial<Combatant>) =>
   new Combatant({
-    hp: overrides?.hp ?? 100,
-    maxHp: overrides?.maxHp ?? 100,
-    barrier: overrides?.barrier ?? 0,
-    constitution: overrides?.constitution ?? 30,
-    statuses: overrides?.statuses ?? new StatusSet(),
-    flags: overrides?.flags ?? {},
+    id: "dummy-id",
+    hp: 100,
+    maxHp: 100,
+    barrier: 0,
+    constitution: 30,
+    san: 0,
+    isPlayer: false,
+    stackDamageUp: 0,
+    stackDamageDown: 0,
+    directcheck: false,
+    criticalcheck: false,
+    stackPoise: 0,
+    stackProtection: 0,
+    stackVulnerable: 0,
+    resist: 0,
+    resistEnemy: 0,
+    confResist: 0,
+    econfResistEnemy: 0,
+    doubleConstitution: false,
+    stacksink: 0,
+    statuses: new StatusSet(),
+    flags: {},
+    ...overrides,
   });
 
 describe("TurnProcessor", () => {

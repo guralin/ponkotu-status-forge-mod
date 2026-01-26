@@ -1,28 +1,8 @@
-export type DamageActor = {
-  name?: string;
-  isPlayer: boolean;
-  stackDamageUp: number;
-  stackDamageDown: number;
-  directcheck: boolean;
-  criticalcheck: boolean;
-  stackPoise: number;
-  stackProtection: number;
-  stackVulnerable: number;
-  resist: number;
-  resistEnemy: number;
-  confResist: number;
-  econfResistEnemy: number;
-  hp: number;
-  barrier: number;
-  constitution: number;
-  san: number;
-  doubleConstitution: boolean;
-  stacksink: number;
-};
+import { type Combatant } from "../domain/combat/Combatant";
 
 export type DamageInput = {
-  attacker: DamageActor;
-  receiver: DamageActor;
+  attacker: Combatant;
+  receiver: Combatant;
   baseDamage: number;
 };
 
@@ -48,7 +28,7 @@ export type DamageResult = {
   sanAfter: number;
 };
 
-const calcAttackerNormal = (attacker: DamageActor): number => {
+const calcAttackerNormal = (attacker: Combatant): number => {
   const up = attacker.stackDamageUp;
   const down = attacker.stackDamageDown;
   const isDirect = attacker.directcheck;
@@ -56,7 +36,7 @@ const calcAttackerNormal = (attacker: DamageActor): number => {
 };
 
 const calcAttackerSpecial = (
-  attacker: DamageActor,
+  attacker: Combatant,
   random: () => number
 ): { special: number; poiseCritical: boolean } => {
   let special = 0;
@@ -78,20 +58,20 @@ const calcAttackerSpecial = (
   return { special, poiseCritical };
 };
 
-const calcReceiverNormal = (receiver: DamageActor): number => {
+const calcReceiverNormal = (receiver: Combatant): number => {
   const protection = receiver.stackProtection;
   const vulnerable = receiver.stackVulnerable;
   return protection * 10 - vulnerable * 10;
 };
 
-const calcReceiverSpecial = (receiver: DamageActor): number => {
+const calcReceiverSpecial = (receiver: Combatant): number => {
   const resistance = receiver.isPlayer ? receiver.resist : receiver.resistEnemy;
 
   if (receiver.constitution <= 0) return -100;
   return resistance;
 };
 
-const calcReceiverSpecialConf = (receiver: DamageActor): number => {
+const calcReceiverSpecialConf = (receiver: Combatant): number => {
   const resistance = receiver.isPlayer
     ? receiver.confResist
     : receiver.econfResistEnemy;
@@ -104,7 +84,7 @@ export type DamageCalcOptions = {
   random?: () => number;
 };
 
-export const computeDamage = (
+const computeDamage = (
   input: DamageInput,
   options: DamageCalcOptions = {}
 ) => {
@@ -145,8 +125,9 @@ export const computeDamage = (
 
 export const applyDamage = (
   input: DamageInput,
-  calc: ReturnType<typeof computeDamage>
-): { result: DamageResult; receiver: DamageActor } => {
+  options: DamageCalcOptions = {}
+): { result: DamageResult; receiver: Combatant } => {
+  const calc = computeDamage(input, options);
   const receiver = input.receiver;
 
   let hp = receiver.hp;
@@ -197,6 +178,8 @@ export const applyDamage = (
     nextStacksink = Math.floor(sink / 2);
   }
 
+  receiver.statuses.setStack("Sink", nextStacksink);
+
   const result: DamageResult = {
     ...calc,
     barrierAbsorbed,
@@ -209,7 +192,7 @@ export const applyDamage = (
     sanAfter: san,
   };
 
-  const nextReceiver: DamageActor = {
+  const nextReceiver: Combatant = {
     ...receiver,
     hp,
     barrier,

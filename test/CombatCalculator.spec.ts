@@ -1,35 +1,38 @@
 import { describe, expect, it } from "vitest";
-import {
-  applyDamage,
-  computeDamage,
-  type DamageActor,
-} from "../src/utils/combatCalculator";
+import { Combatant } from "../src/domain/combat/Combatant";
+import { StatusSet } from "../src/domain/status/StatusSet";
+import { applyDamage } from "../src/utils/combatCalculator";
 
-const createActor = (overrides?: Partial<DamageActor>): DamageActor => ({
-  name: "dummy",
-  isPlayer: false,
-  stackDamageUp: 0,
-  stackDamageDown: 0,
-  directcheck: false,
-  criticalcheck: false,
-  stackPoise: 0,
-  stackProtection: 0,
-  stackVulnerable: 0,
-  resist: 0,
-  resistEnemy: 0,
-  confResist: 0,
-  econfResistEnemy: 0,
-  hp: 0,
-  barrier: 0,
-  constitution: 0,
-  san: 0,
-  doubleConstitution: false,
-  stacksink: 0,
-  ...overrides,
-});
+const createActor = (overrides?: Partial<Combatant>): Combatant =>
+  new Combatant({
+    id: "dummy-id",
+    name: "dummy",
+    isPlayer: false,
+    stackDamageUp: 0,
+    stackDamageDown: 0,
+    directcheck: false,
+    criticalcheck: false,
+    stackPoise: 0,
+    stackProtection: 0,
+    stackVulnerable: 0,
+    resist: 0,
+    resistEnemy: 0,
+    confResist: 0,
+    econfResistEnemy: 0,
+    hp: 0,
+    maxHp: 0,
+    barrier: 0,
+    constitution: 0,
+    san: 0,
+    doubleConstitution: false,
+    stacksink: 0,
+    statuses: new StatusSet(),
+    flags: {},
+    ...overrides,
+  });
 
 describe("combatCalculator", () => {
-  it("computeDamage が倍率とダメージを決定的に計算できる", () => {
+  it("applyDamage が倍率とダメージを決定的に計算できる", () => {
     const attacker = createActor({
       stackDamageUp: 2,
       stackDamageDown: 1,
@@ -46,7 +49,7 @@ describe("combatCalculator", () => {
       confResist: 20,
     });
 
-    const result = computeDamage(
+    const { result } = applyDamage(
       { attacker, receiver, baseDamage: 10 },
       { random: () => 0 }
     );
@@ -71,36 +74,22 @@ describe("combatCalculator", () => {
       stacksink: 4,
     });
     const attacker = createActor({});
-    const calc = {
-      attackerNormalPercentage: 0,
-      attackerSpecialPercentage: 0,
-      receiverNormalPercentage: 0,
-      receiverSpecialPercentage: 0,
-      receiverSpecialConfPercentage: 0,
-      normalRatio: 1,
-      specialRatio: 1,
-      specialConfRatio: 1,
-      dealDamage: 12.2,
-      dealConfDamage: 3.2,
-      poiseCritical: false,
-    };
-
     const { result, receiver: nextReceiver } = applyDamage(
       { attacker, receiver, baseDamage: 10 },
-      calc
+      { random: () => 0.999 }
     );
 
     expect(result.barrierAbsorbed).toBe(5);
-    expect(result.hpDamageApplied).toBe(8);
-    expect(result.confDamageApplied).toBe(8);
+    expect(result.hpDamageApplied).toBe(5);
+    expect(result.confDamageApplied).toBe(20);
     expect(result.sanDamageApplied).toBe(4);
-    expect(result.hpAfter).toBe(92);
+    expect(result.hpAfter).toBe(95);
     expect(result.barrierAfter).toBe(0);
-    expect(result.constitutionAfter).toBe(2);
+    expect(result.constitutionAfter).toBe(0);
     expect(result.sanAfter).toBe(2);
-    expect(nextReceiver.hp).toBe(92);
+    expect(nextReceiver.hp).toBe(95);
     expect(nextReceiver.barrier).toBe(0);
-    expect(nextReceiver.constitution).toBe(2);
+    expect(nextReceiver.constitution).toBe(0);
     expect(nextReceiver.san).toBe(2);
     expect(nextReceiver.stacksink).toBe(2);
   });

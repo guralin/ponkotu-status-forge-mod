@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { DamageActorRepository } from "../repository/DamageActorRepository";
-import { applyDamage, computeDamage, type DamageResult } from "../utils/combatCalculator";
+import { CombatantRepository } from "../repository/CombatantRepository";
+import { applyDamage, type DamageResult } from "../utils/combatCalculator";
 
 export type TokenOption = {
   actorId: string;
@@ -108,32 +108,27 @@ export const useDamageCalcState = (): DamageCalcState => {
 
     try {
       setRunning(true);
-      const repository = new DamageActorRepository();
-      const attackerRecord = repository.load(attackerId);
-      const receiverRecord = repository.load(receiverId);
+      const repository = new CombatantRepository();
+      const attackerRecord = repository.loadByActorId(attackerId);
+      const receiverRecord = repository.loadByActorId(receiverId);
       if (!attackerRecord || !receiverRecord) {
         ui.notifications?.error("攻撃者または防御者のデータを取得できませんでした");
         return;
       }
-      const calc = computeDamage({
-        attacker: attackerRecord.snapshot,
-        receiver: receiverRecord.snapshot,
-        baseDamage: base,
-      });
       const { result: calcResult, receiver: nextReceiver } = applyDamage(
         {
-          attacker: attackerRecord.snapshot,
-          receiver: receiverRecord.snapshot,
+          attacker: attackerRecord.combatant,
+          receiver: receiverRecord.combatant,
           baseDamage: base,
-        },
-        calc
+        }
       );
-      await repository.saveReceiver(receiverRecord.actorId, nextReceiver);
+
+      await repository.saveActor(nextReceiver);
       const content = `
 ${attacker.name} → ${receiver.name}<br/>
 基礎ダメージ: ${base}<br/>
 HPダメージ: ${calcResult.hpDamageApplied} (バリア吸収: ${calcResult.barrierAbsorbed})<br/>
-耐性限界ダメージ: ${calcResult.confDamageApplied}<br/>
+混乱ダメージ: ${calcResult.confDamageApplied}<br/>
 SANダメージ(沈潜): ${calcResult.sanDamageApplied}<br/>
 `;
       await ChatMessage.create({
