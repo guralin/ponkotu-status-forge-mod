@@ -20,7 +20,7 @@ const buildTokenOptions = (): TokenOption[] =>
       name: token.name ?? token.actor?.name ?? "unknown",
       isPlayer: isPlayerActor(token.actor as Actor),
     }))
-    .filter((token) => token.actorId);
+    .filter((token) => token.isPlayer);
 
 const pickDefaultAttacker = (list: TokenOption[]) =>
   list.find((token) => token.isPlayer)?.actorId ?? list[0]?.actorId ?? "";
@@ -53,6 +53,7 @@ export const useDamageCalcState = (): DamageCalcState => {
   const [running, setRunning] = useState(false);
 
   useEffect(() => {
+    console.log(canvas?.tokens?.placeables);
     setTokens(buildTokenOptions());
   }, []);
 

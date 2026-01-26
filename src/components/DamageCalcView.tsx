@@ -34,6 +34,7 @@ export const DamageCalcView = ({
 }: Props) => (
   <div className="ponkotu-damage">
     <div className="ponkotu-damage__row">
+      <h3>ver 1.0.0</h3>
       <label className="ponkotu-damage__label">
         攻撃者
         <select value={attackerId} onChange={(e) => onAttackerChange(e.target.value)}>
