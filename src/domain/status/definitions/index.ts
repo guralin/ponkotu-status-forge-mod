@@ -1,5 +1,13 @@
-import { decayByRatio, decrementStack } from "../value/Stack";
-import { type StatusContext, type StatusDefinition } from "./StatusDefinition";
+import { type StatusContext, type StatusDefinition } from "../types/StatusDefinition";
+
+const normalizeStack = (value: number): number =>
+  Math.max(0, Math.floor(value));
+
+const decayByRatio = (value: number, ratio: number): number =>
+  normalizeStack(value * ratio);
+
+const decrementStack = (value: number, amount = 1): number =>
+  normalizeStack(value - amount);
 
 const decayTwoThirds = (value: number) => decayByRatio(value, 2 / 3);
 const decayHalf = (value: number) => decayByRatio(value, 1 / 2);

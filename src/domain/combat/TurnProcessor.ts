@@ -1,23 +1,19 @@
-import { type StatusId } from "../status/StatusId";
+import { type StatusId } from "../status/types/StatusId";
 import { statusDefinitions } from "../status/definitions";
-import { type StatusContext, type StatusDefinition } from "../status/StatusDefinition";
-import { type StatusSet } from "../status/StatusSet";
+import { type StatusContext, type StatusDefinition } from "../status/types/StatusDefinition";
 import { type Combatant } from "./Combatant";
 
 class TurnContext {
   combatant: Combatant;
-  statuses: StatusSet;
 
   constructor(combatant: Combatant) {
     this.combatant = combatant;
-    this.statuses = combatant.statuses;
   }
 
   withStatus(statusId: StatusId): StatusContext<StatusId> {
     return {
       statusId,
       combatant: this.combatant,
-      statuses: this.statuses,
       getStack: this.getStack.bind(this),
       getPending: this.getPending.bind(this),
       setStack: this.setStack.bind(this),
@@ -32,28 +28,28 @@ class TurnContext {
   }
 
   getStack(id: StatusId): number {
-    return this.statuses.getStack(id);
+    return this.combatant.statuses.getStack(id);
   }
 
   getPending(id: StatusId): number {
-    return this.statuses.getPending(id);
+    return this.combatant.statuses.getPending(id);
   }
 
   setStack(id: StatusId, next: number): void {
-    this.statuses.setStack(id, next);
+    this.combatant.statuses.setStack(id, next);
   }
 
   setPending(id: StatusId, next: number): void {
-    this.statuses.setPending(id, next);
+    this.combatant.statuses.setPending(id, next);
   }
 
   addStack(id: StatusId, delta: number): void {
-    const current = this.statuses.getStack(id);
+    const current = this.combatant.statuses.getStack(id);
     this.setStack(id, current + delta);
   }
 
   addPending(id: StatusId, delta: number): void {
-    const current = this.statuses.getPending(id);
+    const current = this.combatant.statuses.getPending(id);
     this.setPending(id, current + delta);
   }
 

@@ -1,7 +1,7 @@
 import { type CombatantRecord, type ICombatantRepository } from "./ICombatantRepository";
 import { Combatant } from "../domain/combat/Combatant";
-import { type StatusDefinition } from "../domain/status/StatusDefinition";
-import { type StatusId } from "../domain/status/StatusId";
+import { type StatusDefinition } from "../domain/status/types/StatusDefinition";
+import { type StatusId } from "../domain/status/types/StatusId";
 import { statusDefinitions } from "../domain/status/definitions";
 import { combatantFromActor } from "./combatantFromActor";
 

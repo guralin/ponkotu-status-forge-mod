@@ -1,10 +1,8 @@
-import { type Combatant } from "../combat/Combatant";
-import { type StatusSet } from "./StatusSet";
+import { type Combatant } from "../../combat/Combatant";
 
 export type StatusContext<Id extends string = string> = {
   statusId: Id;
   combatant: Combatant;
-  statuses: StatusSet;
   getStack: (id: Id) => number;
   getPending: (id: Id) => number;
   setStack: (id: Id, next: number) => void;

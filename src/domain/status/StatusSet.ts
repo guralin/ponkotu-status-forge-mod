@@ -1,6 +1,8 @@
-import { normalizeStack } from "../value/Stack";
-import { type StatusId } from "./StatusId";
-import { type StatusState } from "./StatusState";
+import { type StatusId } from "./types/StatusId";
+import { type StatusState } from "./types/StatusState";
+
+const normalizeStack = (value: number): number =>
+  Math.max(0, Math.floor(value));
 
 export class StatusSet {
   #map = new Map<StatusId, StatusState>();

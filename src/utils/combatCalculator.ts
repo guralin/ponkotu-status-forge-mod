@@ -1,11 +1,11 @@
 import { type Combatant } from "../domain/combat/Combatant";
-import { type StatusId } from "../domain/status/StatusId";
+import { type StatusId } from "../domain/status/types/StatusId";
 import { statusDefinitions } from "../domain/status/definitions";
 import {
   type DamageEvent,
   type DamageStatusContext,
   type StatusDefinition,
-} from "../domain/status/StatusDefinition";
+} from "../domain/status/types/StatusDefinition";
 
 export type DamageInput = {
   attacker: Combatant;
@@ -37,7 +37,6 @@ export type DamageResult = {
 
 class DamageContext {
   damage: DamageEvent;
-  statuses: Combatant["statuses"];
   combatant: Combatant;
 
   constructor(
@@ -46,7 +45,6 @@ class DamageContext {
   ) {
     this.combatant = combatant;
     this.damage = damage;
-    this.statuses = combatant.statuses;
   }
 
   withStatus(statusId: StatusId): DamageStatusContext<StatusId> {
@@ -54,7 +52,6 @@ class DamageContext {
       statusId,
       combatant: this.combatant,
       damage: this.damage,
-      statuses: this.statuses,
       getStack: this.getStack.bind(this),
       getPending: this.getPending.bind(this),
       setStack: this.setStack.bind(this),
@@ -69,28 +66,28 @@ class DamageContext {
   }
 
   getStack(id: StatusId): number {
-    return this.statuses.getStack(id);
+    return this.combatant.statuses.getStack(id);
   }
 
   getPending(id: StatusId): number {
-    return this.statuses.getPending(id);
+    return this.combatant.statuses.getPending(id);
   }
 
   setStack(id: StatusId, next: number): void {
-    this.statuses.setStack(id, next);
+    this.combatant.statuses.setStack(id, next);
   }
 
   setPending(id: StatusId, next: number): void {
-    this.statuses.setPending(id, next);
+    this.combatant.statuses.setPending(id, next);
   }
 
   addStack(id: StatusId, delta: number): void {
-    const current = this.statuses.getStack(id);
+    const current = this.combatant.statuses.getStack(id);
     this.setStack(id, current + delta);
   }
 
   addPending(id: StatusId, delta: number): void {
-    const current = this.statuses.getPending(id);
+    const current = this.combatant.statuses.getPending(id);
     this.setPending(id, current + delta);
   }
 
