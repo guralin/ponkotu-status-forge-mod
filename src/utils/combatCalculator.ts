@@ -1,4 +1,11 @@
 import { type Combatant } from "../domain/combat/Combatant";
+import { type StatusId } from "../domain/status/StatusId";
+import { statusDefinitions } from "../domain/status/definitions";
+import {
+  type DamageEvent,
+  type DamageStatusContext,
+  type StatusDefinition,
+} from "../domain/status/StatusDefinition";
 
 export type DamageInput = {
   attacker: Combatant;
@@ -26,6 +33,137 @@ export type DamageResult = {
   barrierAfter: number;
   constitutionAfter: number;
   sanAfter: number;
+};
+
+class DamageContext {
+  damage: DamageEvent;
+  statuses: Combatant["statuses"];
+  combatant: Combatant;
+
+  constructor(
+    combatant: Combatant,
+    damage: DamageEvent
+  ) {
+    this.combatant = combatant;
+    this.damage = damage;
+    this.statuses = combatant.statuses;
+  }
+
+  withStatus(statusId: StatusId): DamageStatusContext<StatusId> {
+    return {
+      statusId,
+      combatant: this.combatant,
+      damage: this.damage,
+      statuses: this.statuses,
+      getStack: this.getStack.bind(this),
+      getPending: this.getPending.bind(this),
+      setStack: this.setStack.bind(this),
+      setPending: this.setPending.bind(this),
+      addStack: this.addStack.bind(this),
+      addPending: this.addPending.bind(this),
+      applyHpDamage: this.applyHpDamage.bind(this),
+      applyConstitutionDamage: this.applyConstitutionDamage.bind(this),
+      healHp: this.healHp.bind(this),
+      setBarrier: this.setBarrier.bind(this),
+    };
+  }
+
+  getStack(id: StatusId): number {
+    return this.statuses.getStack(id);
+  }
+
+  getPending(id: StatusId): number {
+    return this.statuses.getPending(id);
+  }
+
+  setStack(id: StatusId, next: number): void {
+    this.statuses.setStack(id, next);
+  }
+
+  setPending(id: StatusId, next: number): void {
+    this.statuses.setPending(id, next);
+  }
+
+  addStack(id: StatusId, delta: number): void {
+    const current = this.statuses.getStack(id);
+    this.setStack(id, current + delta);
+  }
+
+  addPending(id: StatusId, delta: number): void {
+    const current = this.statuses.getPending(id);
+    this.setPending(id, current + delta);
+  }
+
+  applyHpDamage(amount: number): void {
+    const value = Math.max(0, amount);
+    if (value <= 0) return;
+
+    let remaining = value;
+    if (this.combatant.barrier > 0) {
+      const absorbed = Math.min(this.combatant.barrier, remaining);
+      if (absorbed > 0) {
+        this.combatant.barrier = this.combatant.barrier - absorbed;
+        remaining -= absorbed;
+      }
+    }
+
+    if (remaining > 0) {
+      const previous = this.combatant.hp;
+      const applied = Math.min(previous, remaining);
+      if (applied > 0) {
+        this.combatant.hp = previous - applied;
+      }
+    }
+  }
+
+  applyConstitutionDamage(amount: number): void {
+    const value = Math.max(0, amount);
+    if (value <= 0) return;
+
+    const previous = this.combatant.constitution;
+    const applied = Math.min(previous, value);
+    if (applied > 0) {
+      this.combatant.constitution = previous - applied;
+    }
+  }
+
+  healHp(amount: number): void {
+    const value = Math.max(0, amount);
+    if (value <= 0) return;
+
+    const previous = this.combatant.hp;
+    const maxHp = this.combatant.maxHp;
+    const healed = Math.min(Math.max(maxHp - previous, 0), value);
+    if (healed > 0) {
+      this.combatant.hp = previous + healed;
+    }
+  }
+
+  setBarrier(next: number): void {
+    const value = Math.max(0, next);
+    const previous = this.combatant.barrier;
+    if (previous !== value) {
+      this.combatant.barrier = value;
+    }
+  }
+}
+
+const applyDealDamageStatuses = (source: Combatant, damage: DamageEvent) => {
+  const context = new DamageContext(source, damage);
+  const definitions =
+    statusDefinitions as ReadonlyArray<StatusDefinition<StatusId>>;
+  definitions.forEach((definition) => {
+    definition.onDealDamage?.(context.withStatus(definition.id));
+  });
+};
+
+const applyTakeDamageStatuses = (target: Combatant, damage: DamageEvent) => {
+  const context = new DamageContext(target, damage);
+  const definitions =
+    statusDefinitions as ReadonlyArray<StatusDefinition<StatusId>>;
+  definitions.forEach((definition) => {
+    definition.onTakeDamage?.(context.withStatus(definition.id));
+  });
 };
 
 const calcAttackerNormal = (attacker: Combatant): number => {
@@ -126,7 +264,8 @@ const computeDamage = (
 export const applyDamage = (
   input: DamageInput,
   options: DamageCalcOptions = {}
-): { result: DamageResult; receiver: Combatant } => {
+): { result: DamageResult; attacker: Combatant; receiver: Combatant } => {
+  const attacker = input.attacker;
   const calc = computeDamage(input, options);
   const receiver = input.receiver;
 
@@ -178,8 +317,6 @@ export const applyDamage = (
     nextStacksink = Math.floor(sink / 2);
   }
 
-  receiver.statuses.setStack("Sink", nextStacksink);
-
   const result: DamageResult = {
     ...calc,
     barrierAbsorbed,
@@ -192,14 +329,34 @@ export const applyDamage = (
     sanAfter: san,
   };
 
-  const nextReceiver: Combatant = {
-    ...receiver,
-    hp,
-    barrier,
-    constitution,
-    san,
-    stacksink: nextStacksink,
+  receiver.hp = hp;
+  receiver.barrier = barrier;
+  receiver.constitution = constitution;
+  receiver.san = san;
+  receiver.stacksink = nextStacksink;
+
+  receiver.statuses.setStack("Sink", nextStacksink);
+
+  const damageEvent: DamageEvent = {
+    baseDamage: input.baseDamage,
+    normalRatio: calc.normalRatio,
+    specialRatio: calc.specialRatio,
+    specialConfRatio: calc.specialConfRatio,
+    dealDamage: calc.dealDamage,
+    dealConfDamage: calc.dealConfDamage,
+    hpDamageApplied,
+    confDamageApplied,
+    sanDamageApplied,
+    barrierAbsorbed,
+    poiseCritical: calc.poiseCritical,
+    hpAfter: hp,
+    barrierAfter: barrier,
+    constitutionAfter: constitution,
+    sanAfter: san,
   };
 
-  return { result, receiver: nextReceiver };
+  applyDealDamageStatuses(attacker, damageEvent);
+  applyTakeDamageStatuses(receiver, damageEvent);
+
+  return { result, attacker, receiver };
 };

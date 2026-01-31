@@ -9,10 +9,12 @@ export const DamageCalc = () => {
     baseDamage,
     result,
     running,
+    turnRunning,
     setAttackerId,
     setReceiverId,
     setBaseDamage,
     run,
+    runTurnProcess,
   } = useDamageCalcState();
 
   return (
@@ -23,10 +25,12 @@ export const DamageCalc = () => {
       baseDamage={baseDamage}
       result={result}
       running={running}
+      turnRunning={turnRunning}
       onAttackerChange={setAttackerId}
       onReceiverChange={setReceiverId}
       onBaseDamageChange={setBaseDamage}
       onRun={run}
+      onRunTurnProcess={runTurnProcess}
     />
   );
 };

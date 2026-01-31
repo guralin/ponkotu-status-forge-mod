@@ -10,7 +10,7 @@ export class DamageCalcApplication extends Application {
     const options = super.defaultOptions;
     return foundry.utils.mergeObject(options, {
       id: "ponkotu-damage-calc",
-      title: "ダメージ計算",
+      title: "管理者用フォーム",
       template: `modules/${MODULE_ID}/templates/damage-calc.html`,
       width: 520,
       height: 400,

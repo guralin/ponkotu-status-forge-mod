@@ -19,9 +19,37 @@ export type StatusContext<Id extends string = string> = {
 
 export type StatusHandler<Id extends string = string> = (ctx: StatusContext<Id>) => void;
 
+export type DamageEvent = {
+  baseDamage: number;
+  normalRatio: number;
+  specialRatio: number;
+  specialConfRatio: number;
+  dealDamage: number;
+  dealConfDamage: number;
+  hpDamageApplied: number;
+  confDamageApplied: number;
+  sanDamageApplied: number;
+  barrierAbsorbed: number;
+  poiseCritical: boolean;
+  hpAfter: number;
+  barrierAfter: number;
+  constitutionAfter: number;
+  sanAfter: number;
+};
+
+export type DamageStatusContext<Id extends string = string> = StatusContext<Id> & {
+  damage: DamageEvent;
+};
+
+export type DamageStatusHandler<Id extends string = string> = (
+  ctx: DamageStatusContext<Id>
+) => void;
+
 export type StatusDefinition<Id extends string = string> = {
   id: Id;
   hasPending?: boolean;
   onTurnStart?: StatusHandler<Id>;
   onTurnEnd?: StatusHandler<Id>;
+  onDealDamage?: DamageStatusHandler<Id>;
+  onTakeDamage?: DamageStatusHandler<Id>;
 };
