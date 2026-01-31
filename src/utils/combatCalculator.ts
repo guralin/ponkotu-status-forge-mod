@@ -95,56 +95,19 @@ class DamageContext {
   }
 
   applyHpDamage(amount: number): void {
-    const value = Math.max(0, amount);
-    if (value <= 0) return;
-
-    let remaining = value;
-    if (this.combatant.barrier > 0) {
-      const absorbed = Math.min(this.combatant.barrier, remaining);
-      if (absorbed > 0) {
-        this.combatant.barrier = this.combatant.barrier - absorbed;
-        remaining -= absorbed;
-      }
-    }
-
-    if (remaining > 0) {
-      const previous = this.combatant.hp;
-      const applied = Math.min(previous, remaining);
-      if (applied > 0) {
-        this.combatant.hp = previous - applied;
-      }
-    }
+    this.combatant.applyHpDamage(amount);
   }
 
   applyConstitutionDamage(amount: number): void {
-    const value = Math.max(0, amount);
-    if (value <= 0) return;
-
-    const previous = this.combatant.constitution;
-    const applied = Math.min(previous, value);
-    if (applied > 0) {
-      this.combatant.constitution = previous - applied;
-    }
+    this.combatant.applyConstitutionDamage(amount);
   }
 
   healHp(amount: number): void {
-    const value = Math.max(0, amount);
-    if (value <= 0) return;
-
-    const previous = this.combatant.hp;
-    const maxHp = this.combatant.maxHp;
-    const healed = Math.min(Math.max(maxHp - previous, 0), value);
-    if (healed > 0) {
-      this.combatant.hp = previous + healed;
-    }
+    this.combatant.healHp(amount);
   }
 
   setBarrier(next: number): void {
-    const value = Math.max(0, next);
-    const previous = this.combatant.barrier;
-    if (previous !== value) {
-      this.combatant.barrier = value;
-    }
+    this.combatant.setBarrier(next);
   }
 }
 
@@ -167,8 +130,8 @@ const applyTakeDamageStatuses = (target: Combatant, damage: DamageEvent) => {
 };
 
 const calcAttackerNormal = (attacker: Combatant): number => {
-  const up = attacker.stackDamageUp;
-  const down = attacker.stackDamageDown;
+  const up = attacker.statuses.getStack("DamageUp");
+  const down = attacker.statuses.getStack("DamageDown");
   const isDirect = attacker.directcheck;
   return up * 10 - down * 10 + (isDirect ? 50 : 0);
 };
@@ -183,7 +146,7 @@ const calcAttackerSpecial = (
   const isCritical = attacker.criticalcheck;
   if (isCritical) special += 20;
 
-  const stackPoise = attacker.stackPoise;
+  const stackPoise = attacker.statuses.getStack("Poise");
   if (stackPoise > 0) {
     const chance = Math.min(stackPoise * 5, 100);
     const roll = random() * 100;
@@ -197,8 +160,8 @@ const calcAttackerSpecial = (
 };
 
 const calcReceiverNormal = (receiver: Combatant): number => {
-  const protection = receiver.stackProtection;
-  const vulnerable = receiver.stackVulnerable;
+  const protection = receiver.statuses.getStack("Protection");
+  const vulnerable = receiver.statuses.getStack("Vulnerable");
   return protection * 10 - vulnerable * 10;
 };
 
@@ -273,7 +236,7 @@ export const applyDamage = (
   let barrier = receiver.barrier;
   let constitution = receiver.constitution;
   let san = receiver.san;
-  let nextStacksink = receiver.stacksink;
+  let nextStacksink = receiver.statuses.getStack("Sink");
   const isDoubleConstitution = receiver.doubleConstitution;
 
   const hpDamageCeil = Math.ceil(calc.dealDamage);
@@ -301,7 +264,7 @@ export const applyDamage = (
   }
 
   let sanDamageApplied = 0;
-  const sink = receiver.stacksink;
+  const sink = receiver.statuses.getStack("Sink");
   if (sink > 0) {
     let sinkDamage = sink;
     const sanAbsorbed = Math.min(san, sinkDamage);
@@ -330,10 +293,10 @@ export const applyDamage = (
   };
 
   receiver.hp = hp;
-  receiver.barrier = barrier;
-  receiver.constitution = constitution;
-  receiver.san = san;
-  receiver.stacksink = nextStacksink;
+  receiver.setBarrier(barrier);
+  receiver.setConstitution(constitution);
+  receiver.setSan(san);
+  receiver.setHp(hp);
 
   receiver.statuses.setStack("Sink", nextStacksink);
 

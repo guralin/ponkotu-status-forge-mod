@@ -14,19 +14,13 @@ export type CombatantParams = {
   constitution: number;
   san: number;
   isPlayer: boolean;
-  stackDamageUp: number;
-  stackDamageDown: number;
   directcheck: boolean;
   criticalcheck: boolean;
-  stackPoise: number;
-  stackProtection: number;
-  stackVulnerable: number;
   resist: number;
   resistEnemy: number;
   confResist: number;
   econfResistEnemy: number;
   doubleConstitution: boolean;
-  stacksink: number;
   statuses: StatusSet;
   flags?: Partial<CombatantFlags>;
   name?: string;
@@ -40,19 +34,13 @@ export class Combatant {
   constitution: number;
   san: number;
   isPlayer: boolean;
-  stackDamageUp: number;
-  stackDamageDown: number;
   directcheck: boolean;
   criticalcheck: boolean;
-  stackPoise: number;
-  stackProtection: number;
-  stackVulnerable: number;
   resist: number;
   resistEnemy: number;
   confResist: number;
   econfResistEnemy: number;
   doubleConstitution: boolean;
-  stacksink: number;
   statuses: StatusSet;
   flags: CombatantFlags;
   name?: string;
@@ -65,19 +53,13 @@ export class Combatant {
     this.constitution = params.constitution;
     this.san = params.san;
     this.isPlayer = params.isPlayer;
-    this.stackDamageUp = params.stackDamageUp;
-    this.stackDamageDown = params.stackDamageDown;
     this.directcheck = params.directcheck;
     this.criticalcheck = params.criticalcheck;
-    this.stackPoise = params.stackPoise;
-    this.stackProtection = params.stackProtection;
-    this.stackVulnerable = params.stackVulnerable;
     this.resist = params.resist;
     this.resistEnemy = params.resistEnemy;
     this.confResist = params.confResist;
     this.econfResistEnemy = params.econfResistEnemy;
     this.doubleConstitution = params.doubleConstitution;
-    this.stacksink = params.stacksink;
     this.statuses = params.statuses;
     this.flags = {
       checkNk: params.flags?.checkNk ?? false,
@@ -85,5 +67,69 @@ export class Combatant {
       checkHitan: params.flags?.checkHitan ?? false,
     };
     this.name = params.name;
+  }
+
+  applyHpDamage(amount: number): void {
+    const value = Math.max(0, amount);
+    if (value <= 0) return;
+
+    let remaining = value;
+    if (this.barrier > 0) {
+      const absorbed = Math.min(this.barrier, remaining);
+      if (absorbed > 0) {
+        this.barrier = this.barrier - absorbed;
+        remaining -= absorbed;
+      }
+    }
+
+    if (remaining > 0) {
+      const previous = this.hp;
+      const applied = Math.min(previous, remaining);
+      if (applied > 0) {
+        this.hp = previous - applied;
+      }
+    }
+  }
+
+  applyConstitutionDamage(amount: number): void {
+    const value = Math.max(0, amount);
+    if (value <= 0) return;
+
+    const previous = this.constitution;
+    const applied = Math.min(previous, value);
+    if (applied > 0) {
+      this.constitution = previous - applied;
+    }
+  }
+
+  healHp(amount: number): void {
+    const value = Math.max(0, amount);
+    if (value <= 0) return;
+
+    const previous = this.hp;
+    const maxHp = this.maxHp;
+    const healed = Math.min(Math.max(maxHp - previous, 0), value);
+    if (healed > 0) {
+      this.hp = previous + healed;
+    }
+  }
+
+  setBarrier(next: number): void {
+    const value = Math.max(0, next);
+    if (this.barrier !== value) {
+      this.barrier = value;
+    }
+  }
+
+  setHp(next: number): void {
+    this.hp = next;
+  }
+
+  setConstitution(next: number): void {
+    this.constitution = next;
+  }
+
+  setSan(next: number): void {
+    this.san = next;
   }
 }

@@ -58,56 +58,19 @@ class TurnContext {
   }
 
   applyHpDamage(amount: number): void {
-    const value = Math.max(0, amount);
-    if (value <= 0) return;
-
-    let remaining = value;
-    if (this.combatant.barrier > 0) {
-      const absorbed = Math.min(this.combatant.barrier, remaining);
-      if (absorbed > 0) {
-        this.combatant.barrier = this.combatant.barrier - absorbed;
-        remaining -= absorbed;
-      }
-    }
-
-    if (remaining > 0) {
-      const previous = this.combatant.hp;
-      const applied = Math.min(previous, remaining);
-      if (applied > 0) {
-        this.combatant.hp = previous - applied;
-      }
-    }
+    this.combatant.applyHpDamage(amount);
   }
 
   applyConstitutionDamage(amount: number): void {
-    const value = Math.max(0, amount);
-    if (value <= 0) return;
-
-    const previous = this.combatant.constitution;
-    const applied = Math.min(previous, value);
-    if (applied > 0) {
-      this.combatant.constitution = previous - applied;
-    }
+    this.combatant.applyConstitutionDamage(amount);
   }
 
   healHp(amount: number): void {
-    const value = Math.max(0, amount);
-    if (value <= 0) return;
-
-    const previous = this.combatant.hp;
-    const maxHp = this.combatant.maxHp;
-    const healed = Math.min(Math.max(maxHp - previous, 0), value);
-    if (healed > 0) {
-      this.combatant.hp = previous + healed;
-    }
+    this.combatant.healHp(amount);
   }
 
   setBarrier(next: number): void {
-    const value = Math.max(0, next);
-    const previous = this.combatant.barrier;
-    if (previous !== value) {
-      this.combatant.barrier = value;
-    }
+    this.combatant.setBarrier(next);
   }
 }
 

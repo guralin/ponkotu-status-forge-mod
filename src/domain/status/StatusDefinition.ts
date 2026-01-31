@@ -47,6 +47,10 @@ export type DamageStatusHandler<Id extends string = string> = (
 
 export type StatusDefinition<Id extends string = string> = {
   id: Id;
+  attribute: {
+    stack: string;
+    pending?: string;
+  };
   hasPending?: boolean;
   onTurnStart?: StatusHandler<Id>;
   onTurnEnd?: StatusHandler<Id>;

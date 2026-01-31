@@ -8,13 +8,8 @@ const createActor = (overrides?: Partial<Combatant>): Combatant =>
     id: "dummy-id",
     name: "dummy",
     isPlayer: false,
-    stackDamageUp: 0,
-    stackDamageDown: 0,
     directcheck: false,
     criticalcheck: false,
-    stackPoise: 0,
-    stackProtection: 0,
-    stackVulnerable: 0,
     resist: 0,
     resistEnemy: 0,
     confResist: 0,
@@ -25,7 +20,6 @@ const createActor = (overrides?: Partial<Combatant>): Combatant =>
     constitution: 0,
     san: 0,
     doubleConstitution: false,
-    stacksink: 0,
     statuses: new StatusSet(),
     flags: {},
     ...overrides,
@@ -34,19 +28,23 @@ const createActor = (overrides?: Partial<Combatant>): Combatant =>
 describe("combatCalculator", () => {
   it("applyDamage が倍率とダメージを決定的に計算できる", () => {
     const attacker = createActor({
-      stackDamageUp: 2,
-      stackDamageDown: 1,
       directcheck: true,
       criticalcheck: true,
-      stackPoise: 10,
+      statuses: new StatusSet({
+        DamageUp: { stack: 2, pending: 0 },
+        DamageDown: { stack: 1, pending: 0 },
+        Poise: { stack: 10, pending: 0 },
+      }),
     });
     const receiver = createActor({
-      stackProtection: 1,
-      stackVulnerable: 0,
       isPlayer: true,
       resist: 10,
       constitution: 10,
       confResist: 20,
+      statuses: new StatusSet({
+        Protection: { stack: 1, pending: 0 },
+        Vulnerable: { stack: 0, pending: 0 },
+      }),
     });
 
     const { result } = applyDamage(
@@ -71,7 +69,9 @@ describe("combatCalculator", () => {
       constitution: 10,
       san: 6,
       doubleConstitution: true,
-      stacksink: 4,
+      statuses: new StatusSet({
+        Sink: { stack: 4, pending: 0 },
+      }),
     });
     const attacker = createActor({});
     const { result, receiver: nextReceiver } = applyDamage(
@@ -91,6 +91,6 @@ describe("combatCalculator", () => {
     expect(nextReceiver.barrier).toBe(0);
     expect(nextReceiver.constitution).toBe(0);
     expect(nextReceiver.san).toBe(2);
-    expect(nextReceiver.stacksink).toBe(2);
+    expect(nextReceiver.statuses.getStack("Sink")).toBe(2);
   });
 });

@@ -1,7 +1,9 @@
 import ReactDOM from "react-dom/client";
 import { SimpleForm } from "../components/SimpleForm";
+import { collectStatusMappingIssues } from "./statusMappingValidation";
 
 const MODULE_ID = "ponkotu-system";
+let hasShownStatusMappingError = false;
 
 export class ReactFormApplication extends Application {
   #root: ReactDOM.Root | null = null;
@@ -20,6 +22,27 @@ export class ReactFormApplication extends Application {
 
   override activateListeners(html: JQuery): void {
     super.activateListeners(html);
+    if (!hasShownStatusMappingError) {
+      const issues = collectStatusMappingIssues();
+      if (issues.length > 0) {
+        hasShownStatusMappingError = true;
+        const content = [
+          "<p>ステータスの属性マッピングに問題があります。</p>",
+          "<ul>",
+          ...issues.map((issue) => `<li>${issue}</li>`),
+          "</ul>",
+        ].join("");
+        new Dialog({
+          title: "ポンコツシステム: 設定エラー",
+          content,
+          buttons: {
+            ok: { label: "OK" },
+          },
+          default: "ok",
+        }).render(true);
+      }
+    }
+
     const container = html[0]?.querySelector<HTMLDivElement>(
       ".ponkotu-react-root"
     );
