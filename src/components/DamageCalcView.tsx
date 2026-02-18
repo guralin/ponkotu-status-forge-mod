@@ -8,10 +8,12 @@ type Props = {
   baseDamage: string;
   result: DamageResult | null;
   running: boolean;
+  turnRunning: boolean;
   onAttackerChange: (value: string) => void;
   onReceiverChange: (value: string) => void;
   onBaseDamageChange: (value: string) => void;
   onRun: () => void;
+  onRunTurnProcess: () => void;
 };
 
 const formatNumber = (value: number) =>
@@ -27,19 +29,24 @@ export const DamageCalcView = ({
   baseDamage,
   result,
   running,
+  turnRunning,
   onAttackerChange,
   onReceiverChange,
   onBaseDamageChange,
   onRun,
+  onRunTurnProcess,
 }: Props) => (
   <div className="ponkotu-damage">
+    <div className="ponkotu-damage__row">
+      <h3>ダメージ計算</h3>
+    </div>
     <div className="ponkotu-damage__row">
       <label className="ponkotu-damage__label">
         攻撃者
         <select value={attackerId} onChange={(e) => onAttackerChange(e.target.value)}>
           <option value="">選択してください</option>
           {tokens.map((token) => (
-            <option key={token.id} value={token.id}>
+            <option key={token.actorId} value={token.actorId}>
               {optionLabel(token)}
             </option>
           ))}
@@ -51,7 +58,7 @@ export const DamageCalcView = ({
         <select value={receiverId} onChange={(e) => onReceiverChange(e.target.value)}>
           <option value="">選択してください</option>
           {tokens.map((token) => (
-            <option key={token.id} value={token.id}>
+            <option key={token.actorId} value={token.actorId}>
               {optionLabel(token)}
             </option>
           ))}
@@ -76,6 +83,19 @@ export const DamageCalcView = ({
       {tokens.length < 2 && (
         <span className="ponkotu-damage__hint">※ トークンが2体以上必要です</span>
       )}
+    </div>
+
+    <div className="ponkotu-damage__row">
+      <h3 style={{ margin: "8px 0" }}>ターン処理</h3>
+    </div>
+
+    <div className="ponkotu-damage__row">
+      <button
+        onClick={onRunTurnProcess}
+        disabled={turnRunning || tokens.length < 1}
+      >
+        {turnRunning ? "処理中..." : "ターン処理(終了→開始)"}
+      </button>
     </div>
 
     {result && (

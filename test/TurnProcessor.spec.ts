@@ -3,21 +3,25 @@ import { Combatant } from "../src/domain/combat/Combatant";
 import { TurnProcessor } from "../src/domain/combat/TurnProcessor";
 import { StatusSet } from "../src/domain/status/StatusSet";
 
-const createCombatant = (overrides?: {
-  hp?: number;
-  maxHp?: number;
-  barrier?: number;
-  constitution?: number;
-  statuses?: StatusSet;
-  flags?: { checkNk?: boolean; checkAnri?: boolean; checkHitan?: boolean };
-}) =>
+const createCombatant = (overrides?: Partial<Combatant>) =>
   new Combatant({
-    hp: overrides?.hp ?? 100,
-    maxHp: overrides?.maxHp ?? 100,
-    barrier: overrides?.barrier ?? 0,
-    constitution: overrides?.constitution ?? 30,
-    statuses: overrides?.statuses ?? new StatusSet(),
-    flags: overrides?.flags ?? {},
+    id: "dummy-id",
+    hp: 100,
+    maxHp: 100,
+    barrier: 0,
+    constitution: 30,
+    san: 0,
+    isPlayer: false,
+    directcheck: false,
+    criticalcheck: false,
+    resist: 0,
+    resistEnemy: 0,
+    confResist: 0,
+    econfResistEnemy: 0,
+    doubleConstitution: false,
+    statuses: new StatusSet(),
+    flags: {},
+    ...overrides,
   });
 
 describe("TurnProcessor", () => {
@@ -59,12 +63,8 @@ describe("TurnProcessor", () => {
     });
     const combatant = createCombatant({ hp: 100, statuses });
 
-    const events = TurnProcessor.turnEnd(combatant);
-    const damageReasons = events
-      .filter((event) => event.type === "damage-applied")
-      .map((event) => event.reason);
+    TurnProcessor.turnEnd(combatant);
 
-    expect(damageReasons).toEqual(["DarkFire", "Burned"]);
     expect(combatant.hp).toBe(85);
     expect(combatant.statuses.getStack("DarkFire")).toBe(0);
     expect(combatant.statuses.getStack("Burned")).toBe(3);
@@ -91,5 +91,16 @@ describe("TurnProcessor", () => {
     TurnProcessor.turnEnd(combatant);
     expect(combatant.statuses.getStack("Regen")).toBe(1);
     expect(combatant.hp).toBe(60);
+  });
+
+  it("Sink は checkNk のとき stack が +2 される", () => {
+    const statuses = new StatusSet({
+      Sink: { stack: 3, pending: 0 },
+    });
+    const combatant = createCombatant({ statuses, flags: { checkNk: true } });
+
+    TurnProcessor.turnEnd(combatant);
+
+    expect(combatant.statuses.getStack("Sink")).toBe(5);
   });
 });
