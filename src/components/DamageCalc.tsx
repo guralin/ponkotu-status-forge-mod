@@ -1,36 +1,16 @@
-import { DamageCalcView } from "./DamageCalcView";
-import { useDamageCalcState } from "./useDamageCalcState";
+import { useDamageCalcTokens } from "./damageCalc/hooks/useDamageCalcTokens";
+import { DamageApplySection } from "./damageCalc/sections/DamageApplySection";
+import { StatusApplySection } from "./damageCalc/sections/StatusApplySection";
+import { TurnProcessSection } from "./damageCalc/sections/TurnProcessSection";
 
 export const DamageCalc = () => {
-  const {
-    tokens,
-    attackerId,
-    receiverId,
-    baseDamage,
-    result,
-    running,
-    turnRunning,
-    setAttackerId,
-    setReceiverId,
-    setBaseDamage,
-    run,
-    runTurnProcess,
-  } = useDamageCalcState();
+  const tokens = useDamageCalcTokens();
 
   return (
-    <DamageCalcView
-      tokens={tokens}
-      attackerId={attackerId}
-      receiverId={receiverId}
-      baseDamage={baseDamage}
-      result={result}
-      running={running}
-      turnRunning={turnRunning}
-      onAttackerChange={setAttackerId}
-      onReceiverChange={setReceiverId}
-      onBaseDamageChange={setBaseDamage}
-      onRun={run}
-      onRunTurnProcess={runTurnProcess}
-    />
+    <div className="ponkotu-damage">
+      <DamageApplySection tokens={tokens} />
+      <TurnProcessSection tokens={tokens} />
+      <StatusApplySection tokens={tokens} />
+    </div>
   );
 };
