@@ -77,9 +77,33 @@ describe("applyStatusStack", () => {
     const result = await applyStatusStack(repository, createCommand());
 
     expect(repository.saveActorCallCount).toBe(1);
+    expect(result.target).toBe("stack");
     expect(result.before).toBe(3);
     expect(result.after).toBe(5);
     expect(combatant.statuses.getStack("Burned")).toBe(5);
+  });
+
+  it("pending 指定時は next スタックに加算する", async () => {
+    const combatant = createCombatant({
+      statuses: new StatusSet({ Burned: { stack: 3, pending: 1 } }),
+    });
+    const repository = new FakeCombatantRepository({
+      actorId: "actor-1",
+      actor: { name: "tester" } as Actor,
+      combatant,
+    });
+
+    const result = await applyStatusStack(
+      repository,
+      createCommand({ target: "pending", stackDelta: 2 })
+    );
+
+    expect(repository.saveActorCallCount).toBe(1);
+    expect(result.target).toBe("pending");
+    expect(result.before).toBe(1);
+    expect(result.after).toBe(3);
+    expect(combatant.statuses.getStack("Burned")).toBe(3);
+    expect(combatant.statuses.getPending("Burned")).toBe(3);
   });
 
   it("actorId が空文字なら失敗する", async () => {
@@ -115,5 +139,21 @@ describe("applyStatusStack", () => {
     await expect(
       applyStatusStack(repository, createCommand({ actorId: "unknown" }))
     ).rejects.toThrow("combatant record not found");
+  });
+
+  it("pending 非対応ステータスに pending 指定した場合は失敗する", async () => {
+    const combatant = createCombatant();
+    const repository = new FakeCombatantRepository({
+      actorId: "actor-1",
+      actor: { name: "tester" } as Actor,
+      combatant,
+    });
+
+    await expect(
+      applyStatusStack(
+        repository,
+        createCommand({ statusId: "DarkFire", target: "pending" })
+      )
+    ).rejects.toThrow("selected status does not support pending");
   });
 });

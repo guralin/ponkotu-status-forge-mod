@@ -45,6 +45,7 @@ export type DamageStatusHandler<Id extends string = string> = (
 
 export type StatusDefinition<Id extends string = string> = {
   id: Id;
+  name: string;
   attribute: {
     stack: string;
     pending?: string;

@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
-import { applyStatusStack } from "../../../application/usecases/applyStatusStack";
+import {
+  applyStatusStack,
+  type ApplyStatusTarget,
+} from "../../../application/usecases/applyStatusStack";
 import { statusDefinitions } from "../../../domain/status/definitions";
 import { type StatusId } from "../../../domain/status/types/StatusId";
 import { CombatantRepository } from "../../../repository/CombatantRepository";
@@ -11,10 +14,13 @@ const pickDefaultStatusId = (): StatusId => statusIds[0] ?? "Burned";
 export type StatusApplyFormState = {
   statusTargetId: string;
   statusId: StatusId;
+  applyTarget: ApplyStatusTarget;
+  canApplyPending: boolean;
   statusStack: string;
   statusRunning: boolean;
   setStatusTargetId: (value: string) => void;
   setStatusId: (value: StatusId) => void;
+  setApplyTarget: (value: ApplyStatusTarget) => void;
   setStatusStack: (value: string) => void;
   runApplyStatus: () => Promise<void>;
 };
@@ -24,8 +30,17 @@ export const useStatusApplyForm = (
 ): StatusApplyFormState => {
   const [statusTargetId, setStatusTargetId] = useState<string>("");
   const [statusId, setStatusId] = useState<StatusId>(pickDefaultStatusId);
+  const [applyTarget, setApplyTarget] = useState<ApplyStatusTarget>("stack");
   const [statusStack, setStatusStack] = useState<string>("1");
   const [statusRunning, setStatusRunning] = useState(false);
+  const selectedDefinition = statusDefinitions.find(
+    (definition) => definition.id === statusId
+  );
+  const canApplyPending = Boolean(
+    selectedDefinition &&
+      "pending" in selectedDefinition.attribute &&
+      selectedDefinition.attribute.pending
+  );
 
   useEffect(() => {
     if (!tokens.length) {
@@ -40,6 +55,12 @@ export const useStatusApplyForm = (
       setStatusTargetId(tokens[0]?.actorId ?? "");
     }
   }, [tokens, statusTargetId]);
+
+  useEffect(() => {
+    if (!canApplyPending && applyTarget === "pending") {
+      setApplyTarget("stack");
+    }
+  }, [canApplyPending, applyTarget]);
 
   const runApplyStatus = async () => {
     if (statusRunning) return;
@@ -61,9 +82,11 @@ export const useStatusApplyForm = (
         actorId: statusTargetId,
         statusId,
         stackDelta,
+        target: applyTarget,
       });
+      const targetLabel = result.target === "pending" ? "next" : "現在";
       ui.notifications?.info(
-        `${result.actorName} に ${result.statusId} を ${stackDelta} 付与しました (${result.before}→${result.after})`
+        `${result.actorName} に ${result.statusId}(${targetLabel}) を ${stackDelta} 付与しました (${result.before}→${result.after})`
       );
     } catch (error) {
       console.error("[ponkotu-system] apply status failed", error);
@@ -76,10 +99,13 @@ export const useStatusApplyForm = (
   return {
     statusTargetId,
     statusId,
+    applyTarget,
+    canApplyPending,
     statusStack,
     statusRunning,
     setStatusTargetId,
     setStatusId,
+    setApplyTarget,
     setStatusStack,
     runApplyStatus,
   };

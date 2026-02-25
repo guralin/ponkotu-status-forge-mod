@@ -11,10 +11,13 @@ export const StatusApplySection = ({ tokens }: Props) => {
   const {
     statusTargetId,
     statusId,
+    applyTarget,
+    canApplyPending,
     statusStack,
     statusRunning,
     setStatusTargetId,
     setStatusId,
+    setApplyTarget,
     setStatusStack,
     runApplyStatus,
   } = useStatusApplyForm(tokens);
@@ -49,9 +52,22 @@ export const StatusApplySection = ({ tokens }: Props) => {
           >
             {statusDefinitions.map((definition) => (
               <option key={definition.id} value={definition.id}>
-                {definition.id}
+                {definition.name}
               </option>
             ))}
+          </select>
+        </label>
+
+        <label className="ponkotu-damage__label">
+          付与先
+          <select
+            value={applyTarget}
+            onChange={(e) => setApplyTarget(e.target.value as "stack" | "pending")}
+          >
+            <option value="stack">現在</option>
+            <option value="pending" disabled={!canApplyPending}>
+              次ターン(next)
+            </option>
           </select>
         </label>
       </div>
