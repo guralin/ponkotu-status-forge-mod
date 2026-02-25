@@ -289,11 +289,10 @@ export const applyDamage = (
     sanAfter: san,
   };
 
-  receiver.hp = hp;
+  receiver.setHp(hp);
   receiver.setBarrier(barrier);
   receiver.setConstitution(constitution);
   receiver.setSan(san);
-  receiver.setHp(hp);
 
   receiver.statuses.setStack("Sink", nextStacksink);
 

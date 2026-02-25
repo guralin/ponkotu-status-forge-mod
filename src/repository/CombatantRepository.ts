@@ -40,7 +40,10 @@ export class CombatantRepository implements ICombatantRepository {
 
   async saveActor(combatant: Combatant): Promise<void> {
     const actor = combatant.id ? game.actors?.get(combatant.id) ?? null : null;
-    if (!actor) return;
+    if (!actor) {
+      console.warn(`[ponkotu-system] saveActor: actor not found (id=${combatant.id})`);
+      return;
+    }
     await actor.update(toActorUpdate(combatant));
   }
 

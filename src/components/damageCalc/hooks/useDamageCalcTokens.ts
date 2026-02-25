@@ -18,7 +18,6 @@ export const useDamageCalcTokens = (): TokenOption[] => {
   const [tokens, setTokens] = useState<TokenOption[]>([]);
 
   useEffect(() => {
-    console.log(canvas?.tokens?.placeables);
     setTokens(buildTokenOptions());
   }, []);
 
