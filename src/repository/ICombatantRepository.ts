@@ -7,5 +7,7 @@ export type CombatantRecord = {
 };
 
 export type ICombatantRepository = {
+  loadByActorId(actorId: string): CombatantRecord | null;
+  saveActor(combatant: Combatant): Promise<void>;
   save(record: CombatantRecord): Promise<void>;
 };
