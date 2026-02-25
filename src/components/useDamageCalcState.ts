@@ -20,8 +20,7 @@ const buildTokenOptions = (): TokenOption[] =>
       actorId: token.actor?.id ?? "",
       name: token.name ?? token.actor?.name ?? "unknown",
       isPlayer: isPlayerActor(token.actor as Actor),
-    }))
-    .filter((token) => token.isPlayer);
+    }));
 
 const pickDefaultAttacker = (list: TokenOption[]) =>
   list.find((token) => token.isPlayer)?.actorId ?? list[0]?.actorId ?? "";
