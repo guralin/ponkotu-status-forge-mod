@@ -1,7 +1,7 @@
 import { statusDefinitions } from "../../../domain/status/definitions";
 import { type StatusId } from "../../../domain/status/types/StatusId";
 import { useStatusApplyForm } from "../hooks/useStatusApplyForm";
-import { type TokenOption, optionLabel } from "../types";
+import { type TokenOption, optionLabel, RANDOM_TARGET_OPTIONS } from "../types";
 
 type Props = {
   tokens: TokenOption[];
@@ -9,13 +9,13 @@ type Props = {
 
 export const StatusApplySection = ({ tokens }: Props) => {
   const {
-    statusTargetId,
+    statusTargetValue,
     statusId,
     applyTarget,
     canApplyPending,
     statusStack,
     statusRunning,
-    setStatusTargetId,
+    setStatusTargetValue,
     setStatusId,
     setApplyTarget,
     setStatusStack,
@@ -32,8 +32,8 @@ export const StatusApplySection = ({ tokens }: Props) => {
         <label className="ponkotu-damage__label">
           対象キャラ
           <select
-            value={statusTargetId}
-            onChange={(e) => setStatusTargetId(e.target.value)}
+            value={statusTargetValue}
+            onChange={(e) => setStatusTargetValue(e.target.value)}
           >
             <option value="">選択してください</option>
             {tokens.map((token) => (
@@ -41,6 +41,13 @@ export const StatusApplySection = ({ tokens }: Props) => {
                 {optionLabel(token)}
               </option>
             ))}
+            <optgroup label="ランダム">
+              {RANDOM_TARGET_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </optgroup>
           </select>
         </label>
 

@@ -2,8 +2,9 @@ import {
   initializePonkotuSystem,
   showDamageCalc,
   showReactForm,
+  showStatusApply,
 } from "./application/initializeModule";
 
 initializePonkotuSystem();
 
-export { showDamageCalc, showReactForm };
+export { showDamageCalc, showReactForm, showStatusApply };

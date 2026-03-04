@@ -1,0 +1,7 @@
+/** FVTT の CONST.TOKEN_DISPOSITIONS と同値 */
+export const TOKEN_DISPOSITIONS = {
+  SECRET: -2,
+  HOSTILE: -1,
+  NEUTRAL: 0,
+  FRIENDLY: 1,
+} as const;

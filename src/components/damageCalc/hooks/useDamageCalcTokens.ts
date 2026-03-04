@@ -1,24 +1,29 @@
 import { useEffect, useState } from "react";
+import { statusDefinitions } from "../../../domain/status/definitions";
 import { type TokenOption } from "../types";
 
-const isPlayerActor = (actor: Actor): boolean =>
-  Boolean((actor.system as { attributes?: { isPlayer?: { value?: number } } })
-    ?.attributes?.isPlayer?.value ?? 0);
+const statusStackKeys = statusDefinitions.map((def) => def.attribute.stack);
+
+const isPlayableCharacter = (actor: Actor): boolean => {
+  const attrs = (actor.system as { attributes?: Record<string, unknown> })?.attributes;
+  if (!attrs?.hp) return false;
+  return statusStackKeys.some((key) => key in attrs);
+};
 
 const buildTokenOptions = (): TokenOption[] =>
   (canvas?.tokens?.placeables ?? [])
-    .filter((token) => !!token.actor?.id)
+    .filter((token) => !!token.actor?.id && isPlayableCharacter(token.actor as Actor))
     .map((token) => ({
       actorId: token.actor?.id ?? "",
       name: token.name ?? token.actor?.name ?? "unknown",
-      isPlayer: isPlayerActor(token.actor as Actor),
+      actorName: token.actor?.name ?? "",
+      disposition: token.document.disposition,
     }));
 
 export const useDamageCalcTokens = (): TokenOption[] => {
   const [tokens, setTokens] = useState<TokenOption[]>([]);
 
   useEffect(() => {
-    console.log(canvas?.tokens?.placeables);
     setTokens(buildTokenOptions());
   }, []);
 
