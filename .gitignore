@@ -1,2 +1,22 @@
 node_modules
 .DS_Store
+
+# Claude Code のサンドボックス機能が起動時にプロジェクトルートへ
+# 自動生成する 0 バイト・読み取り専用ダミーファイル（再発防止）
+.bash_profile
+.bashrc
+.gitconfig
+.gitmodules
+.mcp.json
+.profile
+.ripgreprc
+.zprofile
+.zshrc
+HEAD
+config
+hooks
+objects
+refs
+.claude
+.idea
+.vscode

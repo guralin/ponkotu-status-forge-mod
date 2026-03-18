@@ -17,10 +17,17 @@
   "styles": [],
   "languages": [],
   "packs": [],
-  "relationships": {},
+  "relationships": {
+    "requires": [
+      {
+        "id": "socketlib",
+        "type": "module"
+      }
+    ]
+  },
   "scripts": [],
   "templates": ["templates/react-form.html", "templates/damage-calc.html"],
-  "socket": false,
+  "socket": true,
   "manifest": "",
   "download": "",
   "license": "MIT"

@@ -2,12 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 import { CombatantRepository } from "../../../repository/CombatantRepository";
 import { applyDamage, type DamageResult } from "../../../utils/combatCalculator";
 import { type TokenOption } from "../types";
+import { TOKEN_DISPOSITIONS } from "../tokenDispositions";
 
 const pickDefaultAttacker = (list: TokenOption[]) =>
-  list.find((token) => token.isPlayer)?.actorId ?? list[0]?.actorId ?? "";
+  list.find((token) => token.disposition === TOKEN_DISPOSITIONS.FRIENDLY)?.actorId ?? list[0]?.actorId ?? "";
 
 const pickDefaultReceiver = (list: TokenOption[], attackerId: string) =>
-  list.find((token) => token.actorId !== attackerId && !token.isPlayer)
+  list.find((token) => token.actorId !== attackerId && token.disposition !== TOKEN_DISPOSITIONS.FRIENDLY)
     ?.actorId ??
   list.find((token) => token.actorId !== attackerId)?.actorId ??
   "";
