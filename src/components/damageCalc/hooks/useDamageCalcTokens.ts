@@ -18,7 +18,8 @@ const buildTokenOptions = (): TokenOption[] =>
       name: token.name ?? token.actor?.name ?? "unknown",
       actorName: token.actor?.name ?? "",
       disposition: token.document.disposition,
-    }));
+    }))
+    .sort((a, b) => b.disposition - a.disposition); // 友好的→中立→敵対的→秘密
 
 export const useDamageCalcTokens = (): TokenOption[] => {
   const [tokens, setTokens] = useState<TokenOption[]>([]);

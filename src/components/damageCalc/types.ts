@@ -1,4 +1,3 @@
-import { TOKEN_DISPOSITIONS } from "./tokenDispositions";
 
 export type TokenOption = {
   actorId: string;
@@ -7,18 +6,7 @@ export type TokenOption = {
   disposition: number;
 };
 
-const dispositionLabel = (disposition: number): string => {
-  switch (disposition) {
-    case TOKEN_DISPOSITIONS.FRIENDLY:  return "友好的";
-    case TOKEN_DISPOSITIONS.NEUTRAL:   return "中立";
-    case TOKEN_DISPOSITIONS.HOSTILE:   return "敵対的";
-    case TOKEN_DISPOSITIONS.SECRET:    return "秘密";
-    default:                            return "不明";
-  }
-};
-
-export const optionLabel = (token: TokenOption) =>
-  `${token.name}（${token.actorName}） (${dispositionLabel(token.disposition)})`;
+export const optionLabel = (token: TokenOption) => token.name;
 
 /** 状態異常付与フォーム専用の対象選択値 */
 export type StatusTargetValue =
