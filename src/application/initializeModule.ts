@@ -1,6 +1,7 @@
 import { DamageCalcApplication } from "./DamageCalcApplication";
 import { ReactFormApplication } from "./ReactFormApplication";
 import { StatusApplyApplication } from "./StatusApplyApplication";
+import { registerSocket } from "./socketManager";
 
 const MODULE_ID = "ponkotu-system";
 const log = (...args: unknown[]) => console.log(`[${MODULE_ID}]`, ...args);
@@ -47,5 +48,10 @@ export const initializePonkotuSystem = () => {
     log("Hooks.once init fired");
     // init 時点でも API を仕込んでおくことで、ready 前に参照しても undefined にならないようにする
     registerApi();
+  });
+
+  Hooks.once("socketlib.ready", () => {
+    log("Hooks.once socketlib.ready fired");
+    registerSocket(MODULE_ID);
   });
 };

@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
 import {
-  applyStatusStack,
   type ApplyStatusTarget,
 } from "../../../application/usecases/applyStatusStack";
+import { executeApplyStatusAsGM } from "../../../application/socketManager";
 import { statusDefinitions } from "../../../domain/status/definitions";
 import { type StatusId } from "../../../domain/status/types/StatusId";
-import { CombatantRepository } from "../../../repository/CombatantRepository";
 import { type TokenOption, type StatusTargetValue } from "../types";
 import { TOKEN_DISPOSITIONS } from "../tokenDispositions";
 
@@ -110,17 +109,21 @@ export const useStatusApplyForm = (
 
     try {
       setStatusRunning(true);
-      const repository = new CombatantRepository();
-      const result = await applyStatusStack(repository, {
+      const result = await executeApplyStatusAsGM({
         actorId: resolvedActorId,
         statusId,
         stackDelta,
         target: applyTarget,
       });
+      const statusName = statusDefinitions.find(d => d.id === result.statusId)?.name ?? result.statusId;
       const targetLabel = result.target === "pending" ? "next" : "現在";
       ui.notifications?.info(
         `${result.actorName} に ${result.statusId}(${targetLabel}) を ${stackDelta} 付与しました (${result.before}→${result.after})`
       );
+      await ChatMessage.create({
+        speaker: { alias: game.user?.name ?? "不明" },
+        content: `${result.actorName} に ${statusName}（${targetLabel}）を ${stackDelta} 付与しました（${result.before} → ${result.after}）`,
+      });
     } catch (error) {
       console.error("[ponkotu-system] apply status failed", error);
       ui.notifications?.error("状態異常の付与に失敗しました。コンソールを確認してください。");
