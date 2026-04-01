@@ -49,6 +49,7 @@ export const useStatusApplyForm = (
   const [applyTarget, setApplyTarget] = useState<ApplyStatusTarget>("stack");
   const [statusStack, setStatusStack] = useState<string>("1");
   const [statusRunning, setStatusRunning] = useState(false);
+
   const selectedDefinition = statusDefinitions.find(
     (definition) => definition.id === statusId
   );
