@@ -13,7 +13,7 @@ export class StatusApplyApplication extends Application {
       title: "状態異常付与フォーム",
       template: `modules/${MODULE_ID}/templates/status-apply.html`,
       width: 520,
-      height: 300,
+      height: 600,
       resizable: true,
     });
   }
