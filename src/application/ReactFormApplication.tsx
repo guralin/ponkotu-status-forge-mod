@@ -11,7 +11,7 @@ export class ReactFormApplication extends Application {
   static override get defaultOptions() {
     const options = super.defaultOptions;
     return foundry.utils.mergeObject(options, {
-      id: "ponkotu-react-form",
+      classes: ["ponkotu-react-form"],
       title: "React フォーム",
       template: `modules/${MODULE_ID}/templates/react-form.html`,
       width: 420,

@@ -6590,7 +6590,7 @@ class Hp extends Application {
   static get defaultOptions() {
     const n = super.defaultOptions;
     return foundry.utils.mergeObject(n, {
-      id: "ponkotu-damage-calc",
+      classes: ["ponkotu-damage-calc"],
       title: "管理者用フォーム",
       template: `modules/${Up}/templates/damage-calc.html`,
       width: 520,
@@ -6675,7 +6675,7 @@ class Wp extends Application {
   static get defaultOptions() {
     const n = super.defaultOptions;
     return foundry.utils.mergeObject(n, {
-      id: "ponkotu-react-form",
+      classes: ["ponkotu-react-form"],
       title: "React フォーム",
       template: `modules/${Vp}/templates/react-form.html`,
       width: 420,
@@ -6991,7 +6991,7 @@ class im extends Application {
   static get defaultOptions() {
     const n = super.defaultOptions;
     return foundry.utils.mergeObject(n, {
-      id: "ponkotu-status-apply",
+      classes: ["ponkotu-status-apply"],
       title: "状態異常付与フォーム",
       template: `modules/${lm}/templates/status-apply.html`,
       width: 520,
