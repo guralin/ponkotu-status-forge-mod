@@ -31,6 +31,8 @@ export type DamageApplyFormState = {
   baseDamage: string;
   bonusNormal: string;
   bonusSpecial: string;
+  criticalcheck: boolean;
+  directcheck: boolean;
   result: DamageResult | null;
   running: boolean;
   attackerPreview: CombatantPreview | null;
@@ -40,6 +42,8 @@ export type DamageApplyFormState = {
   setBaseDamage: (value: string) => void;
   setBonusNormal: (value: string) => void;
   setBonusSpecial: (value: string) => void;
+  setCriticalcheck: (value: boolean) => void;
+  setDirectcheck: (value: boolean) => void;
   run: () => Promise<void>;
 };
 
@@ -49,6 +53,8 @@ export const useDamageApplyForm = (tokens: TokenOption[]): DamageApplyFormState 
   const [baseDamage, setBaseDamage] = useState<string>("");
   const [bonusNormal, setBonusNormal] = useState<string>("0");
   const [bonusSpecial, setBonusSpecial] = useState<string>("0");
+  const [criticalcheck, setCriticalcheck] = useState<boolean>(false);
+  const [directcheck, setDirectcheck] = useState<boolean>(false);
   const [result, setResult] = useState<DamageResult | null>(null);
   const [running, setRunning] = useState(false);
 
@@ -128,10 +134,10 @@ export const useDamageApplyForm = (tokens: TokenOption[]): DamageApplyFormState 
     const bonusNormalNum = Number(bonusNormal) || 0;
     const bonusSpecialNum = Number(bonusSpecial) || 0;
     return {
-      normal: calcAttackerNormalPreview(attackerCombatant) + (attackerCombatant.directcheck ? 50 : 0) + bonusNormalNum,
-      special: (attackerCombatant.criticalcheck ? 20 : 0) + bonusSpecialNum,
+      normal: calcAttackerNormalPreview(attackerCombatant) + (directcheck ? 50 : 0) + bonusNormalNum,
+      special: (criticalcheck ? 20 : 0) + bonusSpecialNum,
     };
-  }, [attackerCombatant, bonusNormal, bonusSpecial]);
+  }, [attackerCombatant, directcheck, criticalcheck, bonusNormal, bonusSpecial]);
 
   const receiverPreview = useMemo<CombatantPreview | null>(() => {
     if (!receiverCombatant) return null;
@@ -178,6 +184,8 @@ export const useDamageApplyForm = (tokens: TokenOption[]): DamageApplyFormState 
           attacker: attackerRecord.combatant,
           receiver: receiverRecord.combatant,
           baseDamage: base,
+          criticalcheck,
+          directcheck,
           attackerBonusNormal: bonusNormalNum,
           attackerBonusSpecial: bonusSpecialNum,
         });
@@ -216,6 +224,8 @@ SANダメージ(沈潜): ${calcResult.sanDamageApplied}<br/>
     baseDamage,
     bonusNormal,
     bonusSpecial,
+    criticalcheck,
+    directcheck,
     result,
     running,
     attackerPreview,
@@ -225,6 +235,8 @@ SANダメージ(沈潜): ${calcResult.sanDamageApplied}<br/>
     setBaseDamage,
     setBonusNormal,
     setBonusSpecial,
+    setCriticalcheck,
+    setDirectcheck,
     run,
   };
 };

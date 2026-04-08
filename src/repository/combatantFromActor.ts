@@ -42,8 +42,6 @@ export const combatantFromActor = (actor: Actor): Combatant => {
     constitution: getAttrValue(actor, "constitution", 0),
     san: getAttrValue(actor, "san", 0),
     isPlayer: getAttrValue(actor, "isPlayer", 0) > 0,
-    directcheck: getAttrValue(actor, "directcheck", 0) > 0,
-    criticalcheck: getAttrValue(actor, "criticalcheck", 0) > 0,
     resist: getAttrValue(actor, "resist", 0),
     resistEnemy: getAttrValue(actor, "resistEnemy", 0),
     confResist: getAttrValue(actor, "confResist", 0),

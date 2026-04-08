@@ -14,8 +14,6 @@ export type CombatantParams = {
   constitution: number;
   san: number;
   isPlayer: boolean;
-  directcheck: boolean;
-  criticalcheck: boolean;
   resist: number;
   resistEnemy: number;
   confResist: number;
@@ -34,8 +32,6 @@ export class Combatant {
   constitution: number;
   san: number;
   isPlayer: boolean;
-  directcheck: boolean;
-  criticalcheck: boolean;
   resist: number;
   resistEnemy: number;
   confResist: number;
@@ -53,8 +49,6 @@ export class Combatant {
     this.constitution = params.constitution;
     this.san = params.san;
     this.isPlayer = params.isPlayer;
-    this.directcheck = params.directcheck;
-    this.criticalcheck = params.criticalcheck;
     this.resist = params.resist;
     this.resistEnemy = params.resistEnemy;
     this.confResist = params.confResist;

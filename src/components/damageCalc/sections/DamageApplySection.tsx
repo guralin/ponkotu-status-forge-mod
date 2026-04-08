@@ -18,6 +18,8 @@ export const DamageApplySection = ({ tokens }: Props) => {
     baseDamage,
     bonusNormal,
     bonusSpecial,
+    criticalcheck,
+    directcheck,
     result,
     running,
     attackerPreview,
@@ -27,6 +29,8 @@ export const DamageApplySection = ({ tokens }: Props) => {
     setBaseDamage,
     setBonusNormal,
     setBonusSpecial,
+    setCriticalcheck,
+    setDirectcheck,
     run,
   } = useDamageApplyForm(tokens);
 
@@ -96,6 +100,41 @@ export const DamageApplySection = ({ tokens }: Props) => {
           %
         </label>
       </div>
+
+      <div className="ponkotu-damage__row">
+        <label className="ponkotu-damage__label ponkotu-damage__label--inline">
+          <input
+            type="checkbox"
+            checked={criticalcheck}
+            onChange={(e) => setCriticalcheck(e.target.checked)}
+          />
+          クリティカル
+        </label>
+        <label className="ponkotu-damage__label ponkotu-damage__label--inline">
+          <input
+            type="checkbox"
+            checked={directcheck}
+            onChange={(e) => setDirectcheck(e.target.checked)}
+          />
+          直接攻撃
+        </label>
+      </div>
+
+      {attackerPreview !== null && receiverPreview !== null && (
+        <div className="ponkotu-damage__row ponkotu-damage__total-preview">
+      {/* TODO：計算ロジックはcombatCalculatorから参照する形にしたい */}
+          <span>攻撃者 - 防御者 の倍率差</span>
+          <div/>
+          <span>通常倍率: {formatPercentage(attackerPreview.normal - receiverPreview.normal)}</span>
+          <span>  +  </span>
+          <span>特殊倍率: {formatPercentage(attackerPreview.special - receiverPreview.special)}</span>
+          <div/>
+          <span> → </span>
+          <span>
+            合計倍率: {formatPercentage(attackerPreview.normal - receiverPreview.normal + attackerPreview.special - receiverPreview.special)}
+          </span>
+        </div>
+      )}
 
       <label className="ponkotu-damage__label">
         基礎ダメージ

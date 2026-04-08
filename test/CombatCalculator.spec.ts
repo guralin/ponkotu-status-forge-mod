@@ -14,8 +14,6 @@ const createActor = (overrides?: Partial<Combatant>): Combatant =>
     id: "dummy-id",
     name: "dummy",
     isPlayer: false,
-    directcheck: false,
-    criticalcheck: false,
     resist: 0,
     resistEnemy: 0,
     confResist: 0,
@@ -34,8 +32,6 @@ const createActor = (overrides?: Partial<Combatant>): Combatant =>
 describe("combatCalculator", () => {
   it("applyDamage が倍率とダメージを決定的に計算できる", () => {
     const attacker = createActor({
-      directcheck: true,
-      criticalcheck: true,
       statuses: new StatusSet({
         DamageUp: { stack: 2, pending: 0 },
         DamageDown: { stack: 1, pending: 0 },
@@ -54,7 +50,7 @@ describe("combatCalculator", () => {
     });
 
     const { result } = applyDamage(
-      { attacker, receiver, baseDamage: 10 },
+      { attacker, receiver, baseDamage: 10, criticalcheck: true, directcheck: true },
       { random: () => 0 }
     );
 
