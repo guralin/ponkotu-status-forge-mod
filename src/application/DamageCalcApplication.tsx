@@ -9,7 +9,7 @@ export class DamageCalcApplication extends Application {
   static override get defaultOptions() {
     const options = super.defaultOptions;
     return foundry.utils.mergeObject(options, {
-      id: "ponkotu-damage-calc",
+      classes: ["ponkotu-damage-calc"],
       title: "管理者用フォーム",
       template: `modules/${MODULE_ID}/templates/damage-calc.html`,
       width: 520,

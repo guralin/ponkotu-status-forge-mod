@@ -9,7 +9,7 @@ export class StatusApplyApplication extends Application {
   static override get defaultOptions() {
     const options = super.defaultOptions;
     return foundry.utils.mergeObject(options, {
-      id: "ponkotu-status-apply",
+      classes: ["ponkotu-status-apply"],
       title: "状態異常付与フォーム",
       template: `modules/${MODULE_ID}/templates/status-apply.html`,
       width: 520,
