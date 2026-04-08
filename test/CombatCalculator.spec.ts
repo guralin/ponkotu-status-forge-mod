@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { Combatant } from "../src/domain/combat/Combatant";
 import { StatusSet } from "../src/domain/status/StatusSet";
-import { applyDamage } from "../src/utils/combatCalculator";
+import {
+  applyDamage,
+  calcAttackerNormalPreview,
+  calcAttackerSpecialPreview,
+  calcReceiverNormalPreview,
+  calcReceiverSpecialPreview,
+} from "../src/utils/combatCalculator";
 
 const createActor = (overrides?: Partial<Combatant>): Combatant =>
   new Combatant({
@@ -92,5 +98,81 @@ describe("combatCalculator", () => {
     expect(nextReceiver.constitution).toBe(0);
     expect(nextReceiver.san).toBe(2);
     expect(nextReceiver.statuses.getStack("Sink")).toBe(2);
+  });
+});
+
+describe("プレビュー倍率関数", () => {
+  it("calcAttackerNormalPreview は DamageUp/Down のみ反映し directcheck を除外する", () => {
+    const attacker = createActor({
+      directcheck: true,
+      statuses: new StatusSet({
+        DamageUp: { stack: 3, pending: 0 },
+        DamageDown: { stack: 1, pending: 0 },
+      }),
+    });
+    expect(calcAttackerNormalPreview(attacker)).toBe(20);
+  });
+
+  it("calcAttackerNormalPreview は DamageUp/Down がない場合 0 を返す", () => {
+    const attacker = createActor({ directcheck: true });
+    expect(calcAttackerNormalPreview(attacker)).toBe(0);
+  });
+
+  it("calcAttackerSpecialPreview は常に 0 を返す", () => {
+    const attacker = createActor({
+      criticalcheck: true,
+      statuses: new StatusSet({ Poise: { stack: 10, pending: 0 } }),
+    });
+    expect(calcAttackerSpecialPreview(attacker)).toBe(0);
+  });
+
+  it("calcReceiverNormalPreview は Protection/Vulnerable を反映する", () => {
+    const receiver = createActor({
+      constitution: 10,
+      statuses: new StatusSet({
+        Protection: { stack: 2, pending: 0 },
+        Vulnerable: { stack: 1, pending: 0 },
+      }),
+    });
+    expect(calcReceiverNormalPreview(receiver)).toBe(10);
+  });
+
+  it("calcReceiverSpecialPreview はプレイヤーなら resist を返す", () => {
+    const receiver = createActor({ isPlayer: true, resist: 30, constitution: 10 });
+    expect(calcReceiverSpecialPreview(receiver)).toBe(30);
+  });
+
+  it("calcReceiverSpecialPreview は敵なら resistEnemy を返す", () => {
+    const receiver = createActor({ isPlayer: false, resistEnemy: 15, constitution: 10 });
+    expect(calcReceiverSpecialPreview(receiver)).toBe(15);
+  });
+
+  it("calcReceiverSpecialPreview は CON が 0 以下なら -100 を返す", () => {
+    const receiver = createActor({ isPlayer: true, resist: 30, constitution: 0 });
+    expect(calcReceiverSpecialPreview(receiver)).toBe(-100);
+  });
+});
+
+describe("DamageInput の bonus オプション", () => {
+  it("attackerBonusNormal は攻撃者の通常倍率に加算される", () => {
+    const attacker = createActor({
+      statuses: new StatusSet({ DamageUp: { stack: 1, pending: 0 } }),
+    });
+    const receiver = createActor({ constitution: 10 });
+    const { result } = applyDamage(
+      { attacker, receiver, baseDamage: 10, attackerBonusNormal: 15 },
+      { random: () => 0.999 }
+    );
+    expect(result.attackerNormalPercentage).toBe(25);
+  });
+
+  it("attackerBonusSpecial は攻撃者の特殊倍率に加算される", () => {
+    const attacker = createActor({});
+    const receiver = createActor({ constitution: 10 });
+    const { result } = applyDamage(
+      { attacker, receiver, baseDamage: 10, attackerBonusSpecial: 30 },
+      { random: () => 0.999 }
+    );
+    expect(result.attackerSpecialPercentage).toBe(30);
   });
 });

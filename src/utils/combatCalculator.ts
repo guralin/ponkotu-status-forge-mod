@@ -11,6 +11,10 @@ export type DamageInput = {
   attacker: Combatant;
   receiver: Combatant;
   baseDamage: number;
+  /** 攻撃者の通常倍率への追加補正 (%) */
+  attackerBonusNormal?: number;
+  /** 攻撃者の特殊倍率への追加補正 (%) */
+  attackerBonusSpecial?: number;
 };
 
 export type DamageResult = {
@@ -178,6 +182,27 @@ const calcReceiverSpecialConf = (receiver: Combatant): number => {
   return resistance;
 };
 
+// --- プレビュー用のエクスポート関数 ---
+// directcheck・criticalcheck・呼吸（Poise）はフォームのチェックボックスで後実装予定のため除外
+
+/** 攻撃者の通常倍率プレビュー（directcheck を除く） */
+export const calcAttackerNormalPreview = (attacker: Combatant): number => {
+  const up = attacker.statuses.getStack("DamageUp");
+  const down = attacker.statuses.getStack("DamageDown");
+  return up * 10 - down * 10;
+};
+
+/** 攻撃者の特殊倍率プレビュー（criticalcheck・呼吸を除くため常に 0） */
+export const calcAttackerSpecialPreview = (_attacker: Combatant): number => 0;
+
+/** 防御者の通常倍率プレビュー */
+export const calcReceiverNormalPreview = (receiver: Combatant): number =>
+  calcReceiverNormal(receiver);
+
+/** 防御者の特殊倍率プレビュー */
+export const calcReceiverSpecialPreview = (receiver: Combatant): number =>
+  calcReceiverSpecial(receiver);
+
 export type DamageCalcOptions = {
   random?: () => number;
 };
@@ -187,9 +212,13 @@ const computeDamage = (
   options: DamageCalcOptions = {}
 ) => {
   const random = options.random ?? Math.random;
-  const attackerNormalPercentage = calcAttackerNormal(input.attacker);
-  const { special: attackerSpecialPercentage, poiseCritical } =
+  const attackerNormalPercentage =
+    calcAttackerNormal(input.attacker) +
+    (input.attackerBonusNormal ?? 0);
+  const { special: attackerSpecialBase, poiseCritical } =
     calcAttackerSpecial(input.attacker, random);
+  const attackerSpecialPercentage =
+    attackerSpecialBase + (input.attackerBonusSpecial ?? 0);
   const receiverNormalPercentage = calcReceiverNormal(input.receiver);
   const receiverSpecialPercentage = calcReceiverSpecial(input.receiver);
   const receiverSpecialConfPercentage = calcReceiverSpecialConf(input.receiver);

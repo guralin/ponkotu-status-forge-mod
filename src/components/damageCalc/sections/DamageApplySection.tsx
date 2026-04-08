@@ -6,16 +6,27 @@ type Props = {
   tokens: TokenOption[];
 };
 
+const formatPercentage = (value: number): string => {
+  if (value === 0) return "±0%";
+  return value > 0 ? `+${value}%` : `${value}%`;
+};
+
 export const DamageApplySection = ({ tokens }: Props) => {
   const {
     attackerId,
     receiverId,
     baseDamage,
+    bonusNormal,
+    bonusSpecial,
     result,
     running,
+    attackerPreview,
+    receiverPreview,
     setAttackerId,
     setReceiverId,
     setBaseDamage,
+    setBonusNormal,
+    setBonusSpecial,
     run,
   } = useDamageApplyForm(tokens);
 
@@ -25,28 +36,64 @@ export const DamageApplySection = ({ tokens }: Props) => {
         <h3>ダメージ計算</h3>
       </div>
       <div className="ponkotu-damage__row">
-        <label className="ponkotu-damage__label">
-          攻撃者
-          <select value={attackerId} onChange={(e) => setAttackerId(e.target.value)}>
-            <option value="">選択してください</option>
-            {tokens.map((token) => (
-              <option key={token.actorId} value={token.actorId}>
-                {optionLabel(token)}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div>
+          <label className="ponkotu-damage__label">
+            攻撃者: 
+            <select value={attackerId} onChange={(e) => setAttackerId(e.target.value)}>
+              <option value="">選択してください</option>
+              {tokens.map((token) => (
+                <option key={token.actorId} value={token.actorId}>
+                  {optionLabel(token)}
+                </option>
+              ))}
+            </select>
+            {attackerPreview !== null && (
+              <span className="ponkotu-damage__preview">
+                通常 {formatPercentage(attackerPreview.normal)} / 特殊 {formatPercentage(attackerPreview.special)}
+              </span>
+            )}
+          </label>
+        </div>
+        <div>
+          <label className="ponkotu-damage__label">
+            防御者: 
+            <select value={receiverId} onChange={(e) => setReceiverId(e.target.value)}>
+              <option value="">選択してください</option>
+              {tokens.map((token) => (
+                <option key={token.actorId} value={token.actorId}>
+                  {optionLabel(token)}
+                </option>
+              ))}
+            </select>
+            {receiverPreview !== null && (
+              <span className="ponkotu-damage__preview">
+                通常 {formatPercentage(receiverPreview.normal)} / 特殊 {formatPercentage(receiverPreview.special)}
+              </span>
+            )}
+          </label>
+        </div>
+      </div>
 
-        <label className="ponkotu-damage__label">
-          防御者
-          <select value={receiverId} onChange={(e) => setReceiverId(e.target.value)}>
-            <option value="">選択してください</option>
-            {tokens.map((token) => (
-              <option key={token.actorId} value={token.actorId}>
-                {optionLabel(token)}
-              </option>
-            ))}
-          </select>
+      <div className="ponkotu-damage__row">
+        <label className="ponkotu-damage__label ponkotu-damage__label--inline">
+          通常補正
+          <input
+            type="number"
+            value={bonusNormal}
+            onChange={(e) => setBonusNormal(e.target.value)}
+            className="ponkotu-damage__bonus-input"
+          />
+          %
+        </label>
+        <label className="ponkotu-damage__label ponkotu-damage__label--inline">
+          特殊補正
+          <input
+            type="number"
+            value={bonusSpecial}
+            onChange={(e) => setBonusSpecial(e.target.value)}
+            className="ponkotu-damage__bonus-input"
+          />
+          %
         </label>
       </div>
 
@@ -73,3 +120,4 @@ export const DamageApplySection = ({ tokens }: Props) => {
     </>
   );
 };
+

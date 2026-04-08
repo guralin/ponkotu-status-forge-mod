@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
+import { type Combatant } from "../../../domain/combat/Combatant";
 import { CombatantRepository } from "../../../repository/CombatantRepository";
-import { applyDamage, type DamageResult } from "../../../utils/combatCalculator";
+import {
+  applyDamage,
+  calcAttackerNormalPreview,
+  calcReceiverNormalPreview,
+  calcReceiverSpecialPreview,
+  type DamageResult,
+} from "../../../utils/combatCalculator";
 import { type TokenOption } from "../types";
 import { TOKEN_DISPOSITIONS } from "../tokenDispositions";
 
@@ -13,15 +20,26 @@ const pickDefaultReceiver = (list: TokenOption[], attackerId: string) =>
   list.find((token) => token.actorId !== attackerId)?.actorId ??
   "";
 
+export type CombatantPreview = {
+  normal: number;
+  special: number;
+};
+
 export type DamageApplyFormState = {
   attackerId: string;
   receiverId: string;
   baseDamage: string;
+  bonusNormal: string;
+  bonusSpecial: string;
   result: DamageResult | null;
   running: boolean;
+  attackerPreview: CombatantPreview | null;
+  receiverPreview: CombatantPreview | null;
   setAttackerId: (value: string) => void;
   setReceiverId: (value: string) => void;
   setBaseDamage: (value: string) => void;
+  setBonusNormal: (value: string) => void;
+  setBonusSpecial: (value: string) => void;
   run: () => Promise<void>;
 };
 
@@ -29,8 +47,13 @@ export const useDamageApplyForm = (tokens: TokenOption[]): DamageApplyFormState 
   const [attackerId, setAttackerId] = useState<string>("");
   const [receiverId, setReceiverId] = useState<string>("");
   const [baseDamage, setBaseDamage] = useState<string>("");
+  const [bonusNormal, setBonusNormal] = useState<string>("0");
+  const [bonusSpecial, setBonusSpecial] = useState<string>("0");
   const [result, setResult] = useState<DamageResult | null>(null);
   const [running, setRunning] = useState(false);
+
+  const [attackerCombatant, setAttackerCombatant] = useState<Combatant | null>(null);
+  const [receiverCombatant, setReceiverCombatant] = useState<Combatant | null>(null);
 
   const tokenMap = useMemo(() => {
     const map = new Map<string, TokenOption>();
@@ -64,6 +87,60 @@ export const useDamageApplyForm = (tokens: TokenOption[]): DamageApplyFormState 
     if (nextReceiverId !== receiverId) setReceiverId(nextReceiverId);
   }, [tokens, attackerId, receiverId]);
 
+  useEffect(() => {
+    if (!attackerId) {
+      setAttackerCombatant(null);
+      return;
+    }
+    try {
+      const repository = new CombatantRepository();
+      const record = repository.loadByActorId(attackerId);
+      if (!record) {
+        setAttackerCombatant(null);
+        return;
+      }
+      setAttackerCombatant(record.combatant);
+    } catch {
+      setAttackerCombatant(null);
+    }
+  }, [attackerId]);
+
+  useEffect(() => {
+    if (!receiverId) {
+      setReceiverCombatant(null);
+      return;
+    }
+    try {
+      const repository = new CombatantRepository();
+      const record = repository.loadByActorId(receiverId);
+      if (!record) {
+        setReceiverCombatant(null);
+        return;
+      }
+      setReceiverCombatant(record.combatant);
+    } catch {
+      setReceiverCombatant(null);
+    }
+  }, [receiverId]);
+
+  const attackerPreview = useMemo<CombatantPreview | null>(() => {
+    if (!attackerCombatant) return null;
+    const bonusNormalNum = Number(bonusNormal) || 0;
+    const bonusSpecialNum = Number(bonusSpecial) || 0;
+    return {
+      normal: calcAttackerNormalPreview(attackerCombatant) + (attackerCombatant.directcheck ? 50 : 0) + bonusNormalNum,
+      special: (attackerCombatant.criticalcheck ? 20 : 0) + bonusSpecialNum,
+    };
+  }, [attackerCombatant, bonusNormal, bonusSpecial]);
+
+  const receiverPreview = useMemo<CombatantPreview | null>(() => {
+    if (!receiverCombatant) return null;
+    return {
+      normal: calcReceiverNormalPreview(receiverCombatant),
+      special: calcReceiverSpecialPreview(receiverCombatant),
+    };
+  }, [receiverCombatant]);
+
   const run = async () => {
     const base = Number(baseDamage);
     if (!Number.isFinite(base) || base <= 0) {
@@ -92,11 +169,17 @@ export const useDamageApplyForm = (tokens: TokenOption[]): DamageApplyFormState 
         ui.notifications?.error("攻撃者または防御者のデータを取得できませんでした");
         return;
       }
+
+      const bonusNormalNum = Number(bonusNormal) || 0;
+      const bonusSpecialNum = Number(bonusSpecial) || 0;
+
       const { result: calcResult, attacker: nextAttacker, receiver: nextReceiver } =
         applyDamage({
           attacker: attackerRecord.combatant,
           receiver: receiverRecord.combatant,
           baseDamage: base,
+          attackerBonusNormal: bonusNormalNum,
+          attackerBonusSpecial: bonusSpecialNum,
         });
 
       await Promise.all([
@@ -131,11 +214,18 @@ SANダメージ(沈潜): ${calcResult.sanDamageApplied}<br/>
     attackerId,
     receiverId,
     baseDamage,
+    bonusNormal,
+    bonusSpecial,
     result,
     running,
+    attackerPreview,
+    receiverPreview,
     setAttackerId,
     setReceiverId,
     setBaseDamage,
+    setBonusNormal,
+    setBonusSpecial,
     run,
   };
 };
+
