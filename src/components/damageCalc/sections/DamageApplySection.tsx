@@ -6,16 +6,31 @@ type Props = {
   tokens: TokenOption[];
 };
 
+const formatPercentage = (value: number): string => {
+  if (value === 0) return "±0%";
+  return value > 0 ? `+${value}%` : `${value}%`;
+};
+
 export const DamageApplySection = ({ tokens }: Props) => {
   const {
     attackerId,
     receiverId,
     baseDamage,
+    bonusNormal,
+    bonusSpecial,
+    criticalcheck,
+    directcheck,
     result,
     running,
+    attackerPreview,
+    receiverPreview,
     setAttackerId,
     setReceiverId,
     setBaseDamage,
+    setBonusNormal,
+    setBonusSpecial,
+    setCriticalcheck,
+    setDirectcheck,
     run,
   } = useDamageApplyForm(tokens);
 
@@ -25,30 +40,101 @@ export const DamageApplySection = ({ tokens }: Props) => {
         <h3>ダメージ計算</h3>
       </div>
       <div className="ponkotu-damage__row">
-        <label className="ponkotu-damage__label">
-          攻撃者
-          <select value={attackerId} onChange={(e) => setAttackerId(e.target.value)}>
-            <option value="">選択してください</option>
-            {tokens.map((token) => (
-              <option key={token.actorId} value={token.actorId}>
-                {optionLabel(token)}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div>
+          <label className="ponkotu-damage__label">
+            攻撃者: 
+            <select value={attackerId} onChange={(e) => setAttackerId(e.target.value)}>
+              <option value="">選択してください</option>
+              {tokens.map((token) => (
+                <option key={token.actorId} value={token.actorId}>
+                  {optionLabel(token)}
+                </option>
+              ))}
+            </select>
+            {attackerPreview !== null && (
+              <span className="ponkotu-damage__preview">
+                通常 {formatPercentage(attackerPreview.normal)} / 特殊 {formatPercentage(attackerPreview.special)}
+              </span>
+            )}
+          </label>
+        </div>
+        <div>
+          <label className="ponkotu-damage__label">
+            防御者: 
+            <select value={receiverId} onChange={(e) => setReceiverId(e.target.value)}>
+              <option value="">選択してください</option>
+              {tokens.map((token) => (
+                <option key={token.actorId} value={token.actorId}>
+                  {optionLabel(token)}
+                </option>
+              ))}
+            </select>
+            {receiverPreview !== null && (
+              <span className="ponkotu-damage__preview">
+                通常 {formatPercentage(receiverPreview.normal)} / 特殊 {formatPercentage(receiverPreview.special)}
+              </span>
+            )}
+          </label>
+        </div>
+      </div>
 
-        <label className="ponkotu-damage__label">
-          防御者
-          <select value={receiverId} onChange={(e) => setReceiverId(e.target.value)}>
-            <option value="">選択してください</option>
-            {tokens.map((token) => (
-              <option key={token.actorId} value={token.actorId}>
-                {optionLabel(token)}
-              </option>
-            ))}
-          </select>
+      <div className="ponkotu-damage__row">
+        <label className="ponkotu-damage__label ponkotu-damage__label--inline">
+          通常補正
+          <input
+            type="number"
+            value={bonusNormal}
+            onChange={(e) => setBonusNormal(e.target.value)}
+            className="ponkotu-damage__bonus-input"
+          />
+          %
+        </label>
+        <label className="ponkotu-damage__label ponkotu-damage__label--inline">
+          特殊補正
+          <input
+            type="number"
+            value={bonusSpecial}
+            onChange={(e) => setBonusSpecial(e.target.value)}
+            className="ponkotu-damage__bonus-input"
+          />
+          %
         </label>
       </div>
+
+      <div className="ponkotu-damage__row">
+        <label className="ponkotu-damage__label ponkotu-damage__label--inline">
+          <input
+            type="checkbox"
+            checked={criticalcheck}
+            onChange={(e) => setCriticalcheck(e.target.checked)}
+          />
+          クリティカル
+        </label>
+        <label className="ponkotu-damage__label ponkotu-damage__label--inline">
+          <input
+            type="checkbox"
+            checked={directcheck}
+            onChange={(e) => setDirectcheck(e.target.checked)}
+          />
+          直接攻撃
+        </label>
+      </div>
+
+      {attackerPreview !== null && receiverPreview !== null && (
+        <div className="ponkotu-damage__row ponkotu-damage__total-preview">
+      {/* TODO：計算ロジックはcombatCalculatorから参照する形にしたい */}
+          <span>攻撃者 - 防御者 の倍率差</span>
+          <div/>
+          <span>通常倍率: {formatPercentage(attackerPreview.normal - receiverPreview.normal)}</span>
+          <span>  +  </span>
+          <span>特殊倍率: {formatPercentage(attackerPreview.special - receiverPreview.special)}</span>
+          <div/>
+          <span> → </span>
+          <span>
+            合計倍率: {formatPercentage(attackerPreview.normal - receiverPreview.normal + attackerPreview.special - receiverPreview.special)}
+          </span>
+        </div>
+      )}
 
       <label className="ponkotu-damage__label">
         基礎ダメージ
@@ -73,3 +159,4 @@ export const DamageApplySection = ({ tokens }: Props) => {
     </>
   );
 };
+
