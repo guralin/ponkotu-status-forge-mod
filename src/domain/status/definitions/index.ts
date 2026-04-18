@@ -266,4 +266,11 @@ export const statusDefinitions = [
     name: "濃密な煙",
     attribute: { stack: "stackSmokeGrand" },
   },
+  {
+    id: "StackSealBleed",
+    name: "呪印【出血】",
+    attribute: { stack: "stackSealBleed" },
+    hasPending: true,
+    // TODO: 出血ダメージ分を５回与える実装が必要（ただし、スタックが５になったのを監視するタイミング実装自体に検討が必要)
+  }
 ] as const satisfies ReadonlyArray<StatusDefinition<string>>;
