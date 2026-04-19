@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { statusDefinitions } from "../../../domain/status/definitions";
+import { statusDefinitions } from "../../../domain/status/StatusDefinitions";
 import { type TokenOption } from "../types";
 
 const statusStackKeys = statusDefinitions.map((def) => def.attribute.stack);

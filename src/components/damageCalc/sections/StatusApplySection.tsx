@@ -1,4 +1,4 @@
-import { statusDefinitions } from "../../../domain/status/definitions";
+import { statusDefinitions } from "../../../domain/status/StatusDefinitions";
 import { type StatusId } from "../../../domain/status/types/StatusId";
 import { useStatusApplyForm } from "../hooks/useStatusApplyForm";
 import { useStatusLibrary } from "../hooks/useStatusLibrary";

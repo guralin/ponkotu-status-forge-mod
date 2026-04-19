@@ -77,6 +77,7 @@ export const useTurnProcessForm = (
     try {
       setTurnRunning(true);
       const appliedCount = await runTurnEnd();
+      if (game.combat) game.combat.nextRound();
       const startedCount = await runTurnStart();
       const processedCount = appliedCount > 0 ? appliedCount : startedCount;
       if (processedCount > 0) {

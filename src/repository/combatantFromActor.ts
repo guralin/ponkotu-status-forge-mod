@@ -1,7 +1,7 @@
 import { Combatant } from "../domain/combat/Combatant";
 import { type StatusDefinition } from "../domain/status/types/StatusDefinition";
 import { type StatusId } from "../domain/status/types/StatusId";
-import { statusDefinitions } from "../domain/status/definitions";
+import { statusDefinitions } from "../domain/status/StatusDefinitions";
 import { StatusSet } from "../domain/status/StatusSet";
 
 const getAttrValue = (actor: Actor, key: string, fallback = 0): number => {

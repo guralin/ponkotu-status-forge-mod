@@ -1,5 +1,5 @@
 import { type StatusId } from "../../domain/status/types/StatusId";
-import { statusDefinitions } from "../../domain/status/definitions";
+import { statusDefinitions } from "../../domain/status/StatusDefinitions";
 import { type ICombatantRepository } from "../../repository/ICombatantRepository";
 
 export type ApplyStatusTarget = "stack" | "pending";

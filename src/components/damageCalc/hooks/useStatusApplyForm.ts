@@ -3,7 +3,7 @@ import {
   type ApplyStatusTarget,
 } from "../../../application/usecases/applyStatusStack";
 import { executeApplyStatusAsGM } from "../../../application/socketManager";
-import { statusDefinitions } from "../../../domain/status/definitions";
+import { statusDefinitions } from "../../../domain/status/StatusDefinitions";
 import { type StatusId } from "../../../domain/status/types/StatusId";
 import { type TokenOption, type StatusTargetValue } from "../types";
 import { TOKEN_DISPOSITIONS } from "../tokenDispositions";
