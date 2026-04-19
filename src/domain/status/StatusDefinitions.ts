@@ -1,4 +1,4 @@
-import { type StatusContext, type StatusDefinition } from "../types/StatusDefinition";
+import { type StatusContext, type StatusDefinition } from "./types/StatusDefinition";
 
 const normalizeStack = (value: number): number =>
   Math.max(0, Math.floor(value));
@@ -263,8 +263,18 @@ export const statusDefinitions = [
   },
   {
     id: "SmokeGrand",
-    name: "濃密な煙",
+    name: "立ち込める煙",
     attribute: { stack: "stackSmokeGrand" },
+    onTurnStart: (ctx) => {
+      // 立ち込める煙10ごとに与ダメージ上昇1・保護1を得る(最大5スタック分まで)
+      // ステータスアップ系が毎ターンリセットされるため、改めてターン開始時に付与する実装とした
+      // パッシブ：深い息に依存した設定。パッシブの着け外しは検知せず機械的にスタックを付与するため注意
+      const stack = ctx.getStack(ctx.statusId);
+      if (stack > 0) {
+        ctx.addStack("DamageUp", Math.min(stack/10, 5));
+        ctx.addStack("Protection", Math.min(stack/10, 5));
+      }
+    }
   },
   {
     id: "StackSealBleed",
@@ -272,5 +282,18 @@ export const statusDefinitions = [
     attribute: { stack: "stackSealBleed" },
     hasPending: true,
     // TODO: 出血ダメージ分を５回与える実装が必要（ただし、スタックが５になったのを監視するタイミング実装自体に検討が必要)
+  },
+  {
+    id: "checkSora",
+    name: "soraのチェック",
+    attribute: { stack: "checkSora" },
+    onTurnEnd: (ctx) => {
+      // コアSoraをチェックするためのスタック。スタックが1以上ならコアSoraを所持しているとみなす
+      if (ctx.getStack(ctx.statusId) > 0) {
+        console.log(ctx, "コアSoraを所持しているため、煙スタックを7増加させる");
+        // HACK: マジックナンバー。コアに関するデータをFVTTではなくこちらのシステムで管理する際には移動したい
+        ctx.addStack("Smoke", 7);
+      }
+    }
   }
 ] as const satisfies ReadonlyArray<StatusDefinition<string>>;

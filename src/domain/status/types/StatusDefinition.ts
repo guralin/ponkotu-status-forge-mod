@@ -1,8 +1,9 @@
-import { type Combatant } from "../../combat/Combatant";
+import { type StatusOwner } from "./StatusOwner";
 
+// TODO: addStackで指定できるのをstatusDefinitionのidだけにしたいので、StatusDefinitionのidをジェネリクスで受け取るようにする
 export type StatusContext<Id extends string = string> = {
   statusId: Id;
-  combatant: Combatant;
+  combatant: StatusOwner;
   getStack: (id: Id) => number;
   getPending: (id: Id) => number;
   setStack: (id: Id, next: number) => void;

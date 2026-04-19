@@ -1,9 +1,9 @@
 import { type Combatant } from "../domain/combat/Combatant";
+import { createStatusContextFactory } from "../domain/status/StatusContextFactory";
 import { type StatusId } from "../domain/status/types/StatusId";
-import { statusDefinitions } from "../domain/status/definitions";
+import { statusDefinitions } from "../domain/status/StatusDefinitions";
 import {
   type DamageEvent,
-  type DamageStatusContext,
   type StatusDefinition,
 } from "../domain/status/types/StatusDefinition";
 
@@ -43,94 +43,21 @@ export type DamageResult = {
   sanAfter: number;
 };
 
-class DamageContext {
-  damage: DamageEvent;
-  combatant: Combatant;
-
-  constructor(
-    combatant: Combatant,
-    damage: DamageEvent
-  ) {
-    this.combatant = combatant;
-    this.damage = damage;
-  }
-
-  withStatus(statusId: StatusId): DamageStatusContext<StatusId> {
-    return {
-      statusId,
-      combatant: this.combatant,
-      damage: this.damage,
-      getStack: this.getStack.bind(this),
-      getPending: this.getPending.bind(this),
-      setStack: this.setStack.bind(this),
-      setPending: this.setPending.bind(this),
-      addStack: this.addStack.bind(this),
-      addPending: this.addPending.bind(this),
-      applyHpDamage: this.applyHpDamage.bind(this),
-      applyConstitutionDamage: this.applyConstitutionDamage.bind(this),
-      healHp: this.healHp.bind(this),
-      setBarrier: this.setBarrier.bind(this),
-    };
-  }
-
-  getStack(id: StatusId): number {
-    return this.combatant.statuses.getStack(id);
-  }
-
-  getPending(id: StatusId): number {
-    return this.combatant.statuses.getPending(id);
-  }
-
-  setStack(id: StatusId, next: number): void {
-    this.combatant.statuses.setStack(id, next);
-  }
-
-  setPending(id: StatusId, next: number): void {
-    this.combatant.statuses.setPending(id, next);
-  }
-
-  addStack(id: StatusId, delta: number): void {
-    const current = this.combatant.statuses.getStack(id);
-    this.setStack(id, current + delta);
-  }
-
-  addPending(id: StatusId, delta: number): void {
-    const current = this.combatant.statuses.getPending(id);
-    this.setPending(id, current + delta);
-  }
-
-  applyHpDamage(amount: number): void {
-    this.combatant.applyHpDamage(amount);
-  }
-
-  applyConstitutionDamage(amount: number): void {
-    this.combatant.applyConstitutionDamage(amount);
-  }
-
-  healHp(amount: number): void {
-    this.combatant.healHp(amount);
-  }
-
-  setBarrier(next: number): void {
-    this.combatant.setBarrier(next);
-  }
-}
-
 const applyDealDamageStatuses = (source: Combatant, damage: DamageEvent) => {
-  const context = new DamageContext(source, damage);
+  const context = createStatusContextFactory<StatusId>(source);
   const definitions =
     statusDefinitions as ReadonlyArray<StatusDefinition<StatusId>>;
   definitions.forEach((definition) => {
-    definition.onDealDamage?.(context.withStatus(definition.id));
+    definition.onDealDamage?.(context.withDamageStatus(definition.id, damage));
   });
 };
 
 const applyTakeDamageStatuses = (target: Combatant, damage: DamageEvent) => {
-  const context = new DamageContext(target, damage);
+  const context = createStatusContextFactory<StatusId>(target);
   const definitions =
     statusDefinitions as ReadonlyArray<StatusDefinition<StatusId>>;
   definitions.forEach((definition) => {
-    definition.onTakeDamage?.(context.withStatus(definition.id));
+    definition.onTakeDamage?.(context.withDamageStatus(definition.id, damage));
   });
 };
 

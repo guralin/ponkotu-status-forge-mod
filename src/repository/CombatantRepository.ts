@@ -2,7 +2,7 @@ import { type CombatantRecord, type ICombatantRepository } from "./ICombatantRep
 import { Combatant } from "../domain/combat/Combatant";
 import { type StatusDefinition } from "../domain/status/types/StatusDefinition";
 import { type StatusId } from "../domain/status/types/StatusId";
-import { statusDefinitions } from "../domain/status/definitions";
+import { statusDefinitions } from "../domain/status/StatusDefinitions";
 import { combatantFromActor } from "./combatantFromActor";
 
 const toActorUpdate = (combatant: Combatant): Record<string, unknown> => {

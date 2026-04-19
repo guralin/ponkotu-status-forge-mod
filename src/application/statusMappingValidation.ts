@@ -1,6 +1,6 @@
 import { type StatusId } from "../domain/status/types/StatusId";
 import { type StatusDefinition } from "../domain/status/types/StatusDefinition";
-import { statusDefinitions } from "../domain/status/definitions";
+import { statusDefinitions } from "../domain/status/StatusDefinitions";
 
 export const collectStatusMappingIssues = (): string[] => {
   const issues: string[] = [];

@@ -5,6 +5,7 @@
 //9.07 applyFrenzyWhenTurnStart(characterList); 以下追加
 //9.20 同期処理の修正と全体的なrewark
 //2024.09.30 同期処理の修正と全体的なrewark2 by van
+// ラウンド開始時: MP・SANを3ずつ回復（上限まで）
 
 const main = async () => {
   await turnEnd();
@@ -593,6 +594,8 @@ const turnStart = async () => {
 
   await resetDarkFireWhenTurnStart(characterList);
 
+  await applyMpSanRecoveryWhenTurnStart(characterList);
+
   // 状態異常適用1
   await Promise.all([
     applyBleedingWhenTurnStart(characterList),
@@ -619,6 +622,9 @@ const turnStart = async () => {
     applySkmodBySoraWhenTurnStart(characterList),
   ]);
 
+  // ホワイト効果適用（stackVulnerable/stackDamageUpを変更するため、next適用後・狂乱前に実行）
+  await Promise.all([applyWhiteEffectsWhenTurnStart(characterList)]);
+
   // 状態異常適用2 ※ダメージ上昇の反映が何回もされるため、適用を分ける
   await Promise.all([applyFrenzyWhenTurnStart(characterList)]);
   // 状態異常適用3
@@ -638,6 +644,7 @@ const turnStart = async () => {
     }
   });
 };
+
 
 // 状態異常処理関数
 const applyhitanWhenTurnStart = async (characterList) => {
@@ -1144,6 +1151,100 @@ const applySkmodBySoraWhenTurnStart = async (characterList) => {
   }
 
   return [];
+};
+
+const applyWhiteEffectsWhenTurnStart = async (characterList) => {
+  let resultList = [];
+
+  const countWhiteEnemy = characterList.filter(
+    (x) => x.entity.system.attributes.checkWhiteEnemy?.value > 0
+  ).length;
+  const countWhiteAlly = characterList.filter(
+    (x) => x.entity.system.attributes.checkWhiteAlly?.value > 0
+  ).length;
+  const countWhiteLeader = characterList.filter(
+    (x) => x.entity.system.attributes.checkWhiteLeader?.value > 0
+  ).length;
+
+  // checkWhiteEnemy: resistEnemy/econfResistEnemyを数x5にセット、constitution+10
+  if (countWhiteEnemy > 0) {
+    const resistValue = countWhiteEnemy * 5;
+    characterList
+      .filter((x) => x.entity.system.attributes.checkWhiteEnemy?.value > 0)
+      .forEach((x) => {
+        console.log(`${x.entity.name} に対して白化(敵)処理`);
+        resultList.push(
+          x.entity.modifyTokenAttribute("attributes.resistEnemy", resistValue)
+        );
+        resultList.push(
+          x.entity.modifyTokenAttribute(
+            "attributes.econfResistEnemy",
+            resistValue
+          )
+        );
+        const currentConstitution =
+          x.entity.system.attributes.constitution?.value ?? 0;
+        resultList.push(
+          x.entity.modifyTokenAttribute(
+            "attributes.constitution",
+            currentConstitution + 10
+          )
+        );
+      });
+  }
+
+  // checkWhiteAlly & checkWhiteLeader: (合計数-1)/2(切り上げ)だけ脆弱・ダメージ上昇増加
+  const totalAllyLeader = countWhiteAlly + countWhiteLeader;
+  if (totalAllyLeader > 0) {
+    const increaseAmount = Math.ceil((totalAllyLeader - 1) / 2);
+    const hasLeader = countWhiteLeader > 0;
+
+    characterList
+      .filter(
+        (x) =>
+          x.entity.system.attributes.checkWhiteAlly?.value > 0 ||
+          x.entity.system.attributes.checkWhiteLeader?.value > 0
+      )
+      .forEach((x) => {
+        console.log(`${x.entity.name} に対して白化(味方)効果処理`);
+
+        if (increaseAmount > 0) {
+          const currentVulnerable =
+            x.entity.system.attributes.stackVulnerable?.value ?? 0;
+          const currentDamageUp =
+            x.entity.system.attributes.stackDamageUp?.value ?? 0;
+          resultList.push(
+            x.entity.modifyTokenAttribute(
+              "attributes.stackVulnerable",
+              currentVulnerable + increaseAmount
+            )
+          );
+          resultList.push(
+            x.entity.modifyTokenAttribute(
+              "attributes.stackDamageUp",
+              currentDamageUp + increaseAmount
+            )
+          );
+          x.messages.push(
+            `白化効果: 脆弱+${increaseAmount}, ダメージ上昇+${increaseAmount}`
+          );
+        }
+
+        if (hasLeader) {
+          const currentConstitution =
+            x.entity.system.attributes.constitution?.value ?? 0;
+          resultList.push(
+            x.entity.modifyTokenAttribute(
+              "attributes.constitution",
+              currentConstitution + 10
+            )
+          );
+          x.messages.push(`白化効果: 混乱抵抗値10回復`);
+        }
+      });
+  }
+
+  return resultList;
 };
 
 const resetDarkFireWhenTurnStart = async (characterList) => {
