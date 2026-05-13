@@ -3,7 +3,7 @@ import { type StatusId } from "./types/StatusId";
 import { type StatusDefinition } from "./types/StatusDefinition";
 
 const normalizeStack = (value: number): number =>
-  Math.max(0, Math.floor(value));
+  Math.max(0, Math.ceil(value));
 
 const decayByRatio = (value: number, ratio: number): number =>
   normalizeStack(value * ratio);
@@ -92,6 +92,12 @@ export const statusDefinitions: ReadonlyArray<StatusDefinition<StatusId>> = [
     onTurnEnd: (combatant, statusId) => {
       const stack = combatant.getStatusStack(statusId);
       if (stack <= 0) return;
+      combatant.setStatusStack(statusId, decayTwoThirds(stack));
+    },
+    onMatchDamage: (combatant, statusId) => {
+      const stack = combatant.getStatusStack(statusId);
+      if (stack <= 0) return;
+      combatant.applyHpDamage(stack);
       combatant.setStatusStack(statusId, decayTwoThirds(stack));
     },
   },
@@ -283,7 +289,17 @@ export const statusDefinitions: ReadonlyArray<StatusDefinition<StatusId>> = [
     name: "呪印【出血】",
     attribute: { stack: "stackSealBleed" },
     hasPending: true,
-    // TODO: 出血ダメージ分を５回与える実装が必要（ただし、スタックが５になったのを監視するタイミング実装自体に検討が必要)
+    onTakeDamage: (combatant, statusId, damage) => {
+      const stack = combatant.getStatusStack(statusId);
+      if (stack <= 0 || !damage.criticalHit) return;
+
+      const bleeding = combatant.getStatusStack("Bleeding");
+      if (bleeding > 0) {
+        combatant.applyHpDamage(bleeding);
+      }
+      combatant.setStatusStack(statusId, decrementStack(stack));
+    },
+    onTurnEnd: decrementOnTurnEnd,
   },
   {
     id: "checkSora",

@@ -50,7 +50,7 @@ describe("TurnProcessor", () => {
 
     expect(combatant.hp).toBe(80);
     expect(combatant.statuses.getStack("Burned")).toBe(4);
-    expect(combatant.statuses.getStack("Poison")).toBe(2);
+    expect(combatant.statuses.getStack("Poison")).toBe(3);
     expect(combatant.statuses.getStack("Tremor")).toBe(6);
   });
 
@@ -65,7 +65,7 @@ describe("TurnProcessor", () => {
 
     expect(combatant.hp).toBe(85);
     expect(combatant.statuses.getStack("DarkFire")).toBe(0);
-    expect(combatant.statuses.getStack("Burned")).toBe(3);
+    expect(combatant.statuses.getStack("Burned")).toBe(4);
   });
 
   it("turnEnd で barrier が 0 になる", () => {

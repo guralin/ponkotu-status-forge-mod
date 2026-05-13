@@ -95,6 +95,27 @@ describe("combatCalculator", () => {
     expect(nextReceiver.san).toBe(2);
     expect(nextReceiver.statuses.getStack("Sink")).toBe(2);
   });
+
+  it("呪印【出血】は被クリティカル時に出血を消費せず追加ダメージを与えて 1 減少する", () => {
+    const receiver = createActor({
+      hp: 100,
+      constitution: 10,
+      statuses: new StatusSet({
+        Bleeding: { stack: 6, pending: 0 },
+        StackSealBleed: { stack: 2, pending: 0 },
+      }),
+    });
+    const attacker = createActor({});
+
+    const { receiver: nextReceiver } = applyDamage(
+      { attacker, receiver, baseDamage: 10, criticalcheck: true },
+      { random: () => 0.999 }
+    );
+
+    expect(nextReceiver.hp).toBe(82);
+    expect(nextReceiver.statuses.getStack("Bleeding")).toBe(6);
+    expect(nextReceiver.statuses.getStack("StackSealBleed")).toBe(1);
+  });
 });
 
 describe("プレビュー倍率関数", () => {

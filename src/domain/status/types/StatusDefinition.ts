@@ -16,6 +16,7 @@ export type DamageEvent = {
   confDamageApplied: number;
   sanDamageApplied: number;
   barrierAbsorbed: number;
+  criticalHit: boolean;
   poiseCritical: boolean;
   hpAfter: number;
   barrierAfter: number;
@@ -41,4 +42,5 @@ export type StatusDefinition<Id extends string = string> = {
   onTurnEnd?: StatusHandler<Id>;
   onDealDamage?: DamageStatusHandler<Id>;
   onTakeDamage?: DamageStatusHandler<Id>;
+  onMatchDamage?: DamageStatusHandler<Id>;
 };

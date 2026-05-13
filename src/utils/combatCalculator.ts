@@ -266,6 +266,7 @@ export const applyDamage = (
     confDamageApplied,
     sanDamageApplied,
     barrierAbsorbed,
+    criticalHit: (input.criticalcheck ?? false) || calc.poiseCritical,
     poiseCritical: calc.poiseCritical,
     hpAfter: hp,
     barrierAfter: barrier,
