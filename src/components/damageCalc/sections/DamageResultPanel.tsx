@@ -15,7 +15,7 @@ export const DamageResultPanel = ({ result }: Props) => (
     </div>
     <div>
       特殊倍率: 攻撃者 {result.attackerSpecialPercentage}%
-      {result.poiseCritical ? " (呼吸クリティカル)" : ""} / 防御者{" "}
+      {result.criticalHit ? " (クリティカル)" : ""} / 防御者{" "}
       {result.receiverSpecialPercentage}% → 係数 {result.specialRatio.toFixed(2)}
     </div>
     <div>

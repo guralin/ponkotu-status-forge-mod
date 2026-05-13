@@ -20,8 +20,6 @@ const createCombatant = (overrides?: Partial<Combatant>) =>
     constitution: 20,
     san: 10,
     isPlayer: false,
-    directcheck: false,
-    criticalcheck: false,
     resist: 0,
     resistEnemy: 0,
     confResist: 0,

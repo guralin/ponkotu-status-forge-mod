@@ -1,3 +1,31 @@
-import { statusDefinitions } from "../StatusDefinitions";
+export const statusIds = [
+  "DarkFire",
+  "Burned",
+  "Poison",
+  "Tremor",
+  "Bleeding",
+  "Poise",
+  "Sword",
+  "Regen",
+  "Bind",
+  "Paralysis",
+  "Fear",
+  "DamageUp",
+  "DamageDown",
+  "PowerUp",
+  "PowerDown",
+  "Protection",
+  "Vulnerable",
+  "Sink",
+  "FEOAwaken",
+  "Witch1",
+  "Frenzy",
+  "Sinsyoku",
+  "Biribiri",
+  "Smoke",
+  "SmokeGrand",
+  "StackSealBleed",
+  "checkSora",
+] as const;
 
-export type StatusId = (typeof statusDefinitions)[number]["id"];
+export type StatusId = (typeof statusIds)[number];

@@ -1,22 +1,9 @@
-import { type StatusOwner } from "./StatusOwner";
+import { type Combatant } from "../../combat/Combatant";
 
-// TODO: addStackで指定できるのをstatusDefinitionのidだけにしたいので、StatusDefinitionのidをジェネリクスで受け取るようにする
-export type StatusContext<Id extends string = string> = {
-  statusId: Id;
-  combatant: StatusOwner;
-  getStack: (id: Id) => number;
-  getPending: (id: Id) => number;
-  setStack: (id: Id, next: number) => void;
-  setPending: (id: Id, next: number) => void;
-  addStack: (id: Id, delta: number) => void;
-  addPending: (id: Id, delta: number) => void;
-  applyHpDamage: (amount: number) => void;
-  applyConstitutionDamage: (amount: number) => void;
-  healHp: (amount: number) => void;
-  setBarrier: (next: number) => void;
-};
-
-export type StatusHandler<Id extends string = string> = (ctx: StatusContext<Id>) => void;
+export type StatusHandler<Id extends string = string> = (
+  combatant: Combatant,
+  statusId: Id
+) => void;
 
 export type DamageEvent = {
   baseDamage: number;
@@ -29,19 +16,17 @@ export type DamageEvent = {
   confDamageApplied: number;
   sanDamageApplied: number;
   barrierAbsorbed: number;
-  poiseCritical: boolean;
+  criticalHit: boolean;
   hpAfter: number;
   barrierAfter: number;
   constitutionAfter: number;
   sanAfter: number;
 };
 
-export type DamageStatusContext<Id extends string = string> = StatusContext<Id> & {
-  damage: DamageEvent;
-};
-
 export type DamageStatusHandler<Id extends string = string> = (
-  ctx: DamageStatusContext<Id>
+  combatant: Combatant,
+  statusId: Id,
+  damage: DamageEvent
 ) => void;
 
 export type StatusDefinition<Id extends string = string> = {
@@ -56,4 +41,5 @@ export type StatusDefinition<Id extends string = string> = {
   onTurnEnd?: StatusHandler<Id>;
   onDealDamage?: DamageStatusHandler<Id>;
   onTakeDamage?: DamageStatusHandler<Id>;
+  onMatchDamage?: DamageStatusHandler<Id>;
 };

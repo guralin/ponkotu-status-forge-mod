@@ -3,6 +3,7 @@ import { Combatant } from "../src/domain/combat/Combatant";
 import { StatusSet } from "../src/domain/status/StatusSet";
 import {
   applyDamage,
+  calcAttackerCriticalChancePreview,
   calcAttackerNormalPreview,
   calcAttackerSpecialPreview,
   calcReceiverNormalPreview,
@@ -36,6 +37,7 @@ describe("combatCalculator", () => {
         DamageUp: { stack: 2, pending: 0 },
         DamageDown: { stack: 1, pending: 0 },
         Poise: { stack: 10, pending: 0 },
+        Sword: { stack: 10, pending: 0 },
       }),
     });
     const receiver = createActor({
@@ -50,18 +52,81 @@ describe("combatCalculator", () => {
     });
 
     const { result } = applyDamage(
-      { attacker, receiver, baseDamage: 10, criticalcheck: true, directcheck: true },
+      { attacker, receiver, baseDamage: 10, directcheck: true },
       { random: () => 0 }
     );
 
     expect(result.attackerNormalPercentage).toBe(60);
-    expect(result.attackerSpecialPercentage).toBe(40);
+    expect(result.attackerSpecialPercentage).toBe(25);
     expect(result.receiverNormalPercentage).toBe(10);
     expect(result.receiverSpecialPercentage).toBe(10);
-    expect(result.poiseCritical).toBe(true);
+    expect(result.criticalHit).toBe(true);
     expect(result.normalRatio).toBeCloseTo(1.5, 5);
-    expect(result.specialRatio).toBeCloseTo(1.3, 5);
-    expect(result.dealDamage).toBeCloseTo(19.5, 5);
+    expect(result.specialRatio).toBeCloseTo(1.15, 5);
+    expect(result.dealDamage).toBeCloseTo(17.25, 5);
+  });
+
+  it("呼吸20はクリティカル率100%として特殊倍率に +20% する", () => {
+    const attacker = createActor({
+      statuses: new StatusSet({ Poise: { stack: 20, pending: 0 } }),
+    });
+    const receiver = createActor({ constitution: 10 });
+
+    const { result } = applyDamage(
+      { attacker, receiver, baseDamage: 10 },
+      { random: () => 0.999 }
+    );
+
+    expect(result.criticalHit).toBe(true);
+    expect(result.attackerSpecialPercentage).toBe(20);
+  });
+
+  it("剣気50はクリティカル率50%で、成功時に剣気ボーナス +25% を加える", () => {
+    const attacker = createActor({
+      statuses: new StatusSet({ Sword: { stack: 50, pending: 0 } }),
+    });
+    const receiver = createActor({ constitution: 10 });
+
+    const { result } = applyDamage(
+      { attacker, receiver, baseDamage: 10 },
+      { random: () => 0.49 }
+    );
+
+    expect(result.criticalHit).toBe(true);
+    expect(result.attackerSpecialPercentage).toBe(45);
+  });
+
+  it("呼吸と剣気の合算クリティカル率に失敗した場合は特殊倍率を加えない", () => {
+    const attacker = createActor({
+      statuses: new StatusSet({
+        Poise: { stack: 10, pending: 0 },
+        Sword: { stack: 10, pending: 0 },
+      }),
+    });
+    const receiver = createActor({ constitution: 10 });
+
+    const { result } = applyDamage(
+      { attacker, receiver, baseDamage: 10 },
+      { random: () => 0.6 }
+    );
+
+    expect(result.criticalHit).toBe(false);
+    expect(result.attackerSpecialPercentage).toBe(0);
+  });
+
+  it("剣気のクリティカルダメージボーナスは2スタックごとに切り捨てで加算する", () => {
+    const attacker = createActor({
+      statuses: new StatusSet({ Sword: { stack: 11, pending: 0 } }),
+    });
+    const receiver = createActor({ constitution: 10 });
+
+    const { result } = applyDamage(
+      { attacker, receiver, baseDamage: 10 },
+      { random: () => 0 }
+    );
+
+    expect(result.criticalHit).toBe(true);
+    expect(result.attackerSpecialPercentage).toBe(25);
   });
 
   it("applyDamage がバリア/耐性限界/SAN を順に適用する", () => {
@@ -95,12 +160,34 @@ describe("combatCalculator", () => {
     expect(nextReceiver.san).toBe(2);
     expect(nextReceiver.statuses.getStack("Sink")).toBe(2);
   });
+
+  it("呪印【出血】は被クリティカル時に出血を消費せず追加ダメージを与えて 1 減少する", () => {
+    const receiver = createActor({
+      hp: 100,
+      constitution: 10,
+      statuses: new StatusSet({
+        Bleeding: { stack: 6, pending: 0 },
+        StackSealBleed: { stack: 2, pending: 0 },
+      }),
+    });
+    const attacker = createActor({
+      statuses: new StatusSet({ Poise: { stack: 20, pending: 0 } }),
+    });
+
+    const { receiver: nextReceiver } = applyDamage(
+      { attacker, receiver, baseDamage: 10 },
+      { random: () => 0.999 }
+    );
+
+    expect(nextReceiver.hp).toBe(82);
+    expect(nextReceiver.statuses.getStack("Bleeding")).toBe(6);
+    expect(nextReceiver.statuses.getStack("StackSealBleed")).toBe(1);
+  });
 });
 
 describe("プレビュー倍率関数", () => {
-  it("calcAttackerNormalPreview は DamageUp/Down のみ反映し directcheck を除外する", () => {
+  it("calcAttackerNormalPreview は DamageUp/Down のみ反映する", () => {
     const attacker = createActor({
-      directcheck: true,
       statuses: new StatusSet({
         DamageUp: { stack: 3, pending: 0 },
         DamageDown: { stack: 1, pending: 0 },
@@ -110,16 +197,35 @@ describe("プレビュー倍率関数", () => {
   });
 
   it("calcAttackerNormalPreview は DamageUp/Down がない場合 0 を返す", () => {
-    const attacker = createActor({ directcheck: true });
+    const attacker = createActor({});
     expect(calcAttackerNormalPreview(attacker)).toBe(0);
   });
 
   it("calcAttackerSpecialPreview は常に 0 を返す", () => {
     const attacker = createActor({
-      criticalcheck: true,
       statuses: new StatusSet({ Poise: { stack: 10, pending: 0 } }),
     });
     expect(calcAttackerSpecialPreview(attacker)).toBe(0);
+  });
+
+  it("calcAttackerCriticalChancePreview は呼吸と剣気からクリティカル発生率を返す", () => {
+    const attacker = createActor({
+      statuses: new StatusSet({
+        Poise: { stack: 10, pending: 0 },
+        Sword: { stack: 10, pending: 0 },
+      }),
+    });
+    expect(calcAttackerCriticalChancePreview(attacker)).toBe(60);
+  });
+
+  it("calcAttackerCriticalChancePreview は 100% を上限にする", () => {
+    const attacker = createActor({
+      statuses: new StatusSet({
+        Poise: { stack: 20, pending: 0 },
+        Sword: { stack: 50, pending: 0 },
+      }),
+    });
+    expect(calcAttackerCriticalChancePreview(attacker)).toBe(100);
   });
 
   it("calcReceiverNormalPreview は Protection/Vulnerable を反映する", () => {

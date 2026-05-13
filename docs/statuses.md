@@ -5,8 +5,8 @@
 ## 即時ダメージ計算で見る属性
 - `stackDamageUp` / `stackDamageDown`: 攻撃マクロで通常ダメージ補正を算出（±10%/スタック）。ターン終了時に 0 へ。
 - `directcheck`: 直接攻撃フラグ。true なら通常ダメージに +50%。
-- `criticalcheck`: クリティカルフラグ。true なら特殊ダメージに +20%。
-- `stackpoise`: 呼吸スタック。1 につき 5% でクリティカル（上限 100%）。ターン終了時に 1 減少。
+- `stackpoise`: 呼吸スタック。`(呼吸 * 5) + (剣気 * 1)`% でクリティカル（上限 100%）。ターン終了時に 1 減少。
+- `stackSword`: 剣気スタック。クリティカル判定に 1 スタックにつき +1%、クリティカル成立時に 2 スタックにつき特殊ダメージ +1%。最大 50。ターン終了時に減少しない。
 - `stackProtection` / `stackVulnerable`: 防御/脆弱。防御は通常ダメージを 10% 減、脆弱は 10% 増。ターン終了時に 0。
 - `isPlayer`: プレイヤーかどうかの判定。特殊ダメージ耐性や回復対象の選定に使用。
 - `resist` / `resistEnemy`: 特殊ダメージ耐性値（%）。`isPlayer` でどちらを読むか分岐。
@@ -30,6 +30,7 @@
 - `stackParalysis` / `stackFear`: 麻痺/恐怖。ターン終了時に 0。
 - `stackDamageUp` / `stackDamageDown` / `stackPowerUp` / `stackPowerDown` / `stackProtection` / `stackVulnerable`: バフ/デバフ各種。ターン終了時に 0。
 - `stackpoise`: 呼吸。ターン終了時に 1 減少。
+- `stackSword`: 剣気。ターン終了時に減少しない。
 - `stacksink`: 沈潜。`checknk` があれば +2、それ以外は -1。別マクロの SAN/HP ダメージ処理に利用。
 - `stackSinsyoku`: 侵食。スタックが 3 以上かつ `checkAnri` が 0 のとき、HP と耐性限界にスタック値ダメージを与える。
 - `stackfrenzy`: 狂乱。`checkfrenzy` を持ち、HP が最大の半分以下なら +1。

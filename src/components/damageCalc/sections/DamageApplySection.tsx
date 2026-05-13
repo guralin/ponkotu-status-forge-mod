@@ -18,7 +18,6 @@ export const DamageApplySection = ({ tokens }: Props) => {
     baseDamage,
     bonusNormal,
     bonusSpecial,
-    criticalcheck,
     directcheck,
     result,
     running,
@@ -29,7 +28,6 @@ export const DamageApplySection = ({ tokens }: Props) => {
     setBaseDamage,
     setBonusNormal,
     setBonusSpecial,
-    setCriticalcheck,
     setDirectcheck,
     run,
   } = useDamageApplyForm(tokens);
@@ -54,6 +52,9 @@ export const DamageApplySection = ({ tokens }: Props) => {
             {attackerPreview !== null && (
               <span className="ponkotu-damage__preview">
                 通常 {formatPercentage(attackerPreview.normal)} / 特殊 {formatPercentage(attackerPreview.special)}
+                {(attackerPreview.criticalChance ?? 0) >= 1
+                  ? ` / Crit + ${attackerPreview.criticalChance} %`
+                  : ""}
               </span>
             )}
           </label>
@@ -105,14 +106,6 @@ export const DamageApplySection = ({ tokens }: Props) => {
         <label className="ponkotu-damage__label ponkotu-damage__label--inline">
           <input
             type="checkbox"
-            checked={criticalcheck}
-            onChange={(e) => setCriticalcheck(e.target.checked)}
-          />
-          クリティカル
-        </label>
-        <label className="ponkotu-damage__label ponkotu-damage__label--inline">
-          <input
-            type="checkbox"
             checked={directcheck}
             onChange={(e) => setDirectcheck(e.target.checked)}
           />
@@ -159,4 +152,3 @@ export const DamageApplySection = ({ tokens }: Props) => {
     </>
   );
 };
-

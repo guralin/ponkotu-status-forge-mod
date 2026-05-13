@@ -1,7 +1,9 @@
-import { type StatusContext, type StatusDefinition } from "./types/StatusDefinition";
+import { type Combatant } from "../combat/Combatant";
+import { type StatusId } from "./types/StatusId";
+import { type StatusDefinition } from "./types/StatusDefinition";
 
 const normalizeStack = (value: number): number =>
-  Math.max(0, Math.floor(value));
+  Math.max(0, Math.ceil(value));
 
 const decayByRatio = (value: number, ratio: number): number =>
   normalizeStack(value * ratio);
@@ -12,37 +14,37 @@ const decrementStack = (value: number, amount = 1): number =>
 const decayTwoThirds = (value: number) => decayByRatio(value, 2 / 3);
 const decayHalf = (value: number) => decayByRatio(value, 1 / 2);
 
-const resetOnTurnEnd = (ctx: StatusContext) => {
-  const stack = ctx.getStack(ctx.statusId);
+const resetOnTurnEnd = (combatant: Combatant, statusId: StatusId): void => {
+  const stack = combatant.getStatusStack(statusId);
   if (stack > 0) {
-    ctx.setStack(ctx.statusId, 0);
+    combatant.setStatusStack(statusId, 0);
   }
 };
 
-const decrementOnTurnEnd = (ctx: StatusContext) => {
-  const stack = ctx.getStack(ctx.statusId);
+const decrementOnTurnEnd = (combatant: Combatant, statusId: StatusId): void => {
+  const stack = combatant.getStatusStack(statusId);
   if (stack > 0) {
-    ctx.setStack(ctx.statusId, decrementStack(stack));
+    combatant.setStatusStack(statusId, decrementStack(stack));
   }
 };
 
-export const statusDefinitions = [
+export const statusDefinitions: ReadonlyArray<StatusDefinition<StatusId>> = [
   {
     id: "DarkFire",
     name: "黒炎",
     attribute: { stack: "stackDarkFire" },
-    onTurnStart: (ctx) => {
-      const stack = ctx.getStack(ctx.statusId);
+    onTurnStart: (combatant, statusId) => {
+      const stack = combatant.getStatusStack(statusId);
       if (stack > 0) {
-        ctx.setStack(ctx.statusId, 0);
+        combatant.setStatusStack(statusId, 0);
       }
     },
-    onTurnEnd: (ctx) => {
-      const darkFire = ctx.getStack(ctx.statusId);
-      const burned = ctx.getStack("Burned");
+    onTurnEnd: (combatant, statusId) => {
+      const darkFire = combatant.getStatusStack(statusId);
+      const burned = combatant.getStatusStack("Burned");
       if (darkFire > 0 && burned > 0) {
-        ctx.applyHpDamage(darkFire * burned);
-        ctx.setStack(ctx.statusId, 0);
+        combatant.applyHpDamage(darkFire * burned);
+        combatant.setStatusStack(statusId, 0);
       }
     },
   },
@@ -51,11 +53,11 @@ export const statusDefinitions = [
     name: "やけど",
     attribute: { stack: "stackBurned", pending: "stackBurnednext" },
     hasPending: true,
-    onTurnEnd: (ctx) => {
-      const stack = ctx.getStack(ctx.statusId);
+    onTurnEnd: (combatant, statusId) => {
+      const stack = combatant.getStatusStack(statusId);
       if (stack <= 0) return;
-      ctx.applyHpDamage(stack);
-      ctx.setStack(ctx.statusId, decayTwoThirds(stack));
+      combatant.applyHpDamage(stack);
+      combatant.setStatusStack(statusId, decayTwoThirds(stack));
     },
   },
   {
@@ -63,11 +65,11 @@ export const statusDefinitions = [
     name: "毒",
     attribute: { stack: "stackPoison", pending: "stackPoisonnext" },
     hasPending: true,
-    onTurnEnd: (ctx) => {
-      const stack = ctx.getStack(ctx.statusId);
+    onTurnEnd: (combatant, statusId) => {
+      const stack = combatant.getStatusStack(statusId);
       if (stack <= 0) return;
-      ctx.applyHpDamage(stack);
-      ctx.setStack(ctx.statusId, decayHalf(stack));
+      combatant.applyHpDamage(stack);
+      combatant.setStatusStack(statusId, decayHalf(stack));
     },
   },
   {
@@ -75,11 +77,11 @@ export const statusDefinitions = [
     name: "振動",
     attribute: { stack: "stacktremor", pending: "stacktremornext" },
     hasPending: true,
-    onTurnEnd: (ctx) => {
-      const stack = ctx.getStack(ctx.statusId);
+    onTurnEnd: (combatant, statusId) => {
+      const stack = combatant.getStatusStack(statusId);
       if (stack <= 0) return;
-      ctx.applyHpDamage(stack);
-      ctx.setStack(ctx.statusId, decayTwoThirds(stack));
+      combatant.applyHpDamage(stack);
+      combatant.setStatusStack(statusId, decayTwoThirds(stack));
     },
   },
   {
@@ -87,10 +89,16 @@ export const statusDefinitions = [
     name: "出血",
     attribute: { stack: "stackBleeding", pending: "stackBleedingnext" },
     hasPending: true,
-    onTurnEnd: (ctx) => {
-      const stack = ctx.getStack(ctx.statusId);
+    onTurnEnd: (combatant, statusId) => {
+      const stack = combatant.getStatusStack(statusId);
       if (stack <= 0) return;
-      ctx.setStack(ctx.statusId, decayTwoThirds(stack));
+      combatant.setStatusStack(statusId, decayTwoThirds(stack));
+    },
+    onMatchDamage: (combatant, statusId) => {
+      const stack = combatant.getStatusStack(statusId);
+      if (stack <= 0) return;
+      combatant.applyHpDamage(stack);
+      combatant.setStatusStack(statusId, decayTwoThirds(stack));
     },
   },
   {
@@ -98,22 +106,27 @@ export const statusDefinitions = [
     name: "呼吸",
     attribute: { stack: "stackpoise", pending: "stackpoisenext" },
     hasPending: true,
-    onTurnEnd: (ctx) => decrementOnTurnEnd(ctx),
+    onTurnEnd: decrementOnTurnEnd,
+  },
+  {
+    id: "Sword",
+    name: "剣気",
+    attribute: { stack: "stackSword" },
   },
   {
     id: "Regen",
     name: "再生",
     attribute: { stack: "stackregen", pending: "stackregennext" },
     hasPending: true,
-    onTurnStart: (ctx) => {
-      const stack = ctx.getStack(ctx.statusId);
+    onTurnStart: (combatant, statusId) => {
+      const stack = combatant.getStatusStack(statusId);
       if (stack <= 0) return;
-      const amount = ctx.combatant.maxHp * 0.05 * stack;
+      const amount = combatant.maxHp * 0.05 * stack;
       if (amount > 0) {
-        ctx.healHp(amount);
+        combatant.healHp(amount);
       }
     },
-    onTurnEnd: (ctx) => decrementOnTurnEnd(ctx),
+    onTurnEnd: decrementOnTurnEnd,
   },
   {
     id: "Bind",
@@ -169,11 +182,11 @@ export const statusDefinitions = [
     name: "保護",
     attribute: { stack: "stackProtection", pending: "stackProtectionnext" },
     hasPending: true,
-    onTurnStart: (ctx) => {
-      if (!ctx.combatant.flags.checkHitan) return;
-      const stack = ctx.getStack(ctx.statusId);
+    onTurnStart: (combatant, statusId) => {
+      if (!combatant.flags.checkHitan) return;
+      const stack = combatant.getStatusStack(statusId);
       if (stack <= 1) {
-        ctx.setStack(ctx.statusId, 1);
+        combatant.setStatusStack(statusId, 1);
       }
     },
     onTurnEnd: resetOnTurnEnd,
@@ -190,14 +203,14 @@ export const statusDefinitions = [
     name: "沈潜",
     attribute: { stack: "stacksink", pending: "stacksinknext" },
     hasPending: true,
-    onTurnEnd: (ctx) => {
-      const stack = ctx.getStack(ctx.statusId);
-      if (ctx.combatant.flags.checkNk) {
-        ctx.addStack(ctx.statusId, 2);
+    onTurnEnd: (combatant, statusId) => {
+      const stack = combatant.getStatusStack(statusId);
+      if (combatant.flags.checkNk) {
+        combatant.addStatusStack(statusId, 2);
         return;
       }
       if (stack > 0) {
-        ctx.setStack(ctx.statusId, decrementStack(stack));
+        combatant.setStatusStack(statusId, decrementStack(stack));
       }
     },
   },
@@ -206,18 +219,18 @@ export const statusDefinitions = [
     name: "覚醒",
     attribute: { stack: "stackFEOAwaken", pending: "stackFEOAwakenNext" },
     hasPending: true,
-    onTurnEnd: (ctx) => decrementOnTurnEnd(ctx),
+    onTurnEnd: decrementOnTurnEnd,
   },
   {
     id: "Witch1",
     name: "呪詛",
     attribute: { stack: "stackwitch1" },
-    onTurnStart: (ctx) => {
-      const stack = ctx.getStack(ctx.statusId);
+    onTurnStart: (combatant, statusId) => {
+      const stack = combatant.getStatusStack(statusId);
       if (stack <= 0) return;
-      const amount = stack * ctx.combatant.hp * 0.02;
+      const amount = stack * combatant.hp * 0.02;
       if (amount > 0) {
-        ctx.applyHpDamage(amount);
+        combatant.applyHpDamage(amount);
       }
     },
   },
@@ -225,28 +238,28 @@ export const statusDefinitions = [
     id: "Frenzy",
     name: "狂乱",
     attribute: { stack: "stackfrenzy" },
-    onTurnStart: (ctx) => {
-      const stack = ctx.getStack(ctx.statusId);
+    onTurnStart: (combatant, statusId) => {
+      const stack = combatant.getStatusStack(statusId);
       if (stack <= 0) return;
-      ctx.addStack("DamageUp", stack);
-      ctx.addStack("Vulnerable", stack);
+      combatant.addStatusStack("DamageUp", stack);
+      combatant.addStatusStack("Vulnerable", stack);
     },
   },
   {
     id: "Sinsyoku",
     name: "侵食",
     attribute: { stack: "stackSinsyoku" },
-    onTurnStart: (ctx) => {
-      const stack = ctx.getStack(ctx.statusId);
+    onTurnStart: (combatant, statusId) => {
+      const stack = combatant.getStatusStack(statusId);
       if (stack > 0) {
-        ctx.addStack("DamageUp", stack);
+        combatant.addStatusStack("DamageUp", stack);
       }
     },
-    onTurnEnd: (ctx) => {
-      const stack = ctx.getStack(ctx.statusId);
-      if (stack >= 3 && !ctx.combatant.flags.checkAnri) {
-        ctx.applyHpDamage(stack);
-        ctx.applyConstitutionDamage(stack);
+    onTurnEnd: (combatant, statusId) => {
+      const stack = combatant.getStatusStack(statusId);
+      if (stack >= 3 && !combatant.flags.checkAnri) {
+        combatant.applyHpDamage(stack);
+        combatant.applyConstitutionDamage(stack);
       }
     },
   },
@@ -265,35 +278,44 @@ export const statusDefinitions = [
     id: "SmokeGrand",
     name: "立ち込める煙",
     attribute: { stack: "stackSmokeGrand" },
-    onTurnStart: (ctx) => {
+    onTurnStart: (combatant, statusId) => {
       // 立ち込める煙10ごとに与ダメージ上昇1・保護1を得る(最大5スタック分まで)
       // ステータスアップ系が毎ターンリセットされるため、改めてターン開始時に付与する実装とした
       // パッシブ：深い息に依存した設定。パッシブの着け外しは検知せず機械的にスタックを付与するため注意
-      const stack = ctx.getStack(ctx.statusId);
+      const stack = combatant.getStatusStack(statusId);
       if (stack > 0) {
-        ctx.addStack("DamageUp", Math.min(stack/10, 5));
-        ctx.addStack("Protection", Math.min(stack/10, 5));
+        combatant.addStatusStack("DamageUp", Math.min(stack / 10, 5));
+        combatant.addStatusStack("Protection", Math.min(stack / 10, 5));
       }
-    }
+    },
   },
   {
     id: "StackSealBleed",
     name: "呪印【出血】",
     attribute: { stack: "stackSealBleed" },
     hasPending: true,
-    // TODO: 出血ダメージ分を５回与える実装が必要（ただし、スタックが５になったのを監視するタイミング実装自体に検討が必要)
+    onTakeDamage: (combatant, statusId, damage) => {
+      const stack = combatant.getStatusStack(statusId);
+      if (stack <= 0 || !damage.criticalHit) return;
+
+      const bleeding = combatant.getStatusStack("Bleeding");
+      if (bleeding > 0) {
+        combatant.applyHpDamage(bleeding);
+      }
+      combatant.setStatusStack(statusId, decrementStack(stack));
+    },
+    onTurnEnd: decrementOnTurnEnd,
   },
   {
     id: "checkSora",
-    name: "soraのチェック",
+    name: "soraチェック",
     attribute: { stack: "checkSora" },
-    onTurnEnd: (ctx) => {
+    onTurnEnd: (combatant, statusId) => {
       // コアSoraをチェックするためのスタック。スタックが1以上ならコアSoraを所持しているとみなす
-      if (ctx.getStack(ctx.statusId) > 0) {
-        console.log(ctx, "コアSoraを所持しているため、煙スタックを7増加させる");
+      if (combatant.getStatusStack(statusId) > 0) {
         // HACK: マジックナンバー。コアに関するデータをFVTTではなくこちらのシステムで管理する際には移動したい
-        ctx.addStack("Smoke", 7);
+        combatant.addStatusStack("Smoke", 7);
       }
-    }
-  }
-] as const satisfies ReadonlyArray<StatusDefinition<string>>;
+    },
+  },
+];

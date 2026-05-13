@@ -1,5 +1,4 @@
 import { type Combatant } from "../domain/combat/Combatant";
-import { createStatusContextFactory } from "../domain/status/StatusContextFactory";
 import { type StatusId } from "../domain/status/types/StatusId";
 import { statusDefinitions } from "../domain/status/StatusDefinitions";
 import {
@@ -11,8 +10,6 @@ export type DamageInput = {
   attacker: Combatant;
   receiver: Combatant;
   baseDamage: number;
-  /** クリティカル判定（デフォルト false） */
-  criticalcheck?: boolean;
   /** 直接攻撃判定（デフォルト false） */
   directcheck?: boolean;
   /** 攻撃者の通常倍率への追加補正 (%) */
@@ -32,7 +29,7 @@ export type DamageResult = {
   specialConfRatio: number;
   dealDamage: number;
   dealConfDamage: number;
-  poiseCritical: boolean;
+  criticalHit: boolean;
   barrierAbsorbed: number;
   hpDamageApplied: number;
   confDamageApplied: number;
@@ -44,20 +41,18 @@ export type DamageResult = {
 };
 
 const applyDealDamageStatuses = (source: Combatant, damage: DamageEvent) => {
-  const context = createStatusContextFactory<StatusId>(source);
   const definitions =
     statusDefinitions as ReadonlyArray<StatusDefinition<StatusId>>;
   definitions.forEach((definition) => {
-    definition.onDealDamage?.(context.withDamageStatus(definition.id, damage));
+    definition.onDealDamage?.(source, definition.id, damage);
   });
 };
 
 const applyTakeDamageStatuses = (target: Combatant, damage: DamageEvent) => {
-  const context = createStatusContextFactory<StatusId>(target);
   const definitions =
     statusDefinitions as ReadonlyArray<StatusDefinition<StatusId>>;
   definitions.forEach((definition) => {
-    definition.onTakeDamage?.(context.withDamageStatus(definition.id, damage));
+    definition.onTakeDamage?.(target, definition.id, damage);
   });
 };
 
@@ -67,27 +62,30 @@ const calcAttackerNormal = (attacker: Combatant, directcheck: boolean): number =
   return up * 10 - down * 10 + (directcheck ? 50 : 0);
 };
 
+const calcCriticalChance = (attacker: Combatant): number => {
+  const stackPoise = attacker.statuses.getStack("Poise");
+  const stackSword = attacker.statuses.getStack("Sword");
+  return Math.min(stackPoise * 5 + stackSword, 100);
+};
+
 const calcAttackerSpecial = (
   attacker: Combatant,
-  random: () => number,
-  criticalcheck: boolean
-): { special: number; poiseCritical: boolean } => {
+  random: () => number
+): { special: number; criticalHit: boolean } => {
   let special = 0;
-  let poiseCritical = false;
+  let criticalHit = false;
 
-  if (criticalcheck) special += 20;
-
-  const stackPoise = attacker.statuses.getStack("Poise");
-  if (stackPoise > 0) {
-    const chance = Math.min(stackPoise * 5, 100);
+  const stackSword = attacker.statuses.getStack("Sword");
+  const criticalChance = calcCriticalChance(attacker);
+  if (criticalChance > 0) {
     const roll = random() * 100;
-    if (roll < chance) {
-      special += 20;
-      poiseCritical = true;
+    if (roll < criticalChance) {
+      special += 20 + Math.floor(stackSword / 2);
+      criticalHit = true;
     }
   }
 
-  return { special, poiseCritical };
+  return { special, criticalHit };
 };
 
 const calcReceiverNormal = (receiver: Combatant): number => {
@@ -113,7 +111,7 @@ const calcReceiverSpecialConf = (receiver: Combatant): number => {
 };
 
 // --- プレビュー用のエクスポート関数 ---
-// directcheck・criticalcheck はフォームのチェックボックスで管理するため除外
+// directcheck はフォームのチェックボックスで管理するため除外
 
 /** 攻撃者の通常倍率プレビュー（directcheck・DamageUp/Down ベース） */
 export const calcAttackerNormalPreview = (attacker: Combatant): number => {
@@ -122,8 +120,12 @@ export const calcAttackerNormalPreview = (attacker: Combatant): number => {
   return up * 10 - down * 10;
 };
 
-/** 攻撃者の特殊倍率プレビュー（criticalcheck・呼吸を除くため常に 0） */
+/** 攻撃者の特殊倍率プレビュー（確率クリティカルを除くため常に 0） */
 export const calcAttackerSpecialPreview = (_attacker: Combatant): number => 0;
+
+/** 攻撃者のクリティカル発生率プレビュー */
+export const calcAttackerCriticalChancePreview = (attacker: Combatant): number =>
+  calcCriticalChance(attacker);
 
 /** 防御者の通常倍率プレビュー */
 export const calcReceiverNormalPreview = (receiver: Combatant): number =>
@@ -143,12 +145,11 @@ const computeDamage = (
 ) => {
   const random = options.random ?? Math.random;
   const directcheck = input.directcheck ?? false;
-  const criticalcheck = input.criticalcheck ?? false;
   const attackerNormalPercentage =
     calcAttackerNormal(input.attacker, directcheck) +
     (input.attackerBonusNormal ?? 0);
-  const { special: attackerSpecialBase, poiseCritical } =
-    calcAttackerSpecial(input.attacker, random, criticalcheck);
+  const { special: attackerSpecialBase, criticalHit } =
+    calcAttackerSpecial(input.attacker, random);
   const attackerSpecialPercentage =
     attackerSpecialBase + (input.attackerBonusSpecial ?? 0);
   const receiverNormalPercentage = calcReceiverNormal(input.receiver);
@@ -178,7 +179,7 @@ const computeDamage = (
     specialConfRatio,
     dealDamage,
     dealConfDamage,
-    poiseCritical,
+    criticalHit,
   };
 };
 
@@ -269,7 +270,7 @@ export const applyDamage = (
     confDamageApplied,
     sanDamageApplied,
     barrierAbsorbed,
-    poiseCritical: calc.poiseCritical,
+    criticalHit: calc.criticalHit,
     hpAfter: hp,
     barrierAfter: barrier,
     constitutionAfter: constitution,
