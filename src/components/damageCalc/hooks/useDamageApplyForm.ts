@@ -3,6 +3,7 @@ import { type Combatant } from "../../../domain/combat/Combatant";
 import { CombatantRepository } from "../../../repository/CombatantRepository";
 import {
   applyDamage,
+  calcAttackerCriticalChancePreview,
   calcAttackerNormalPreview,
   calcReceiverNormalPreview,
   calcReceiverSpecialPreview,
@@ -23,6 +24,7 @@ const pickDefaultReceiver = (list: TokenOption[], attackerId: string) =>
 export type CombatantPreview = {
   normal: number;
   special: number;
+  criticalChance?: number;
 };
 
 export type DamageApplyFormState = {
@@ -31,7 +33,6 @@ export type DamageApplyFormState = {
   baseDamage: string;
   bonusNormal: string;
   bonusSpecial: string;
-  criticalcheck: boolean;
   directcheck: boolean;
   result: DamageResult | null;
   running: boolean;
@@ -42,7 +43,6 @@ export type DamageApplyFormState = {
   setBaseDamage: (value: string) => void;
   setBonusNormal: (value: string) => void;
   setBonusSpecial: (value: string) => void;
-  setCriticalcheck: (value: boolean) => void;
   setDirectcheck: (value: boolean) => void;
   run: () => Promise<void>;
 };
@@ -53,7 +53,6 @@ export const useDamageApplyForm = (tokens: TokenOption[]): DamageApplyFormState 
   const [baseDamage, setBaseDamage] = useState<string>("");
   const [bonusNormal, setBonusNormal] = useState<string>("0");
   const [bonusSpecial, setBonusSpecial] = useState<string>("0");
-  const [criticalcheck, setCriticalcheck] = useState<boolean>(false);
   const [directcheck, setDirectcheck] = useState<boolean>(false);
   const [result, setResult] = useState<DamageResult | null>(null);
   const [running, setRunning] = useState(false);
@@ -135,9 +134,10 @@ export const useDamageApplyForm = (tokens: TokenOption[]): DamageApplyFormState 
     const bonusSpecialNum = Number(bonusSpecial) || 0;
     return {
       normal: calcAttackerNormalPreview(attackerCombatant) + (directcheck ? 50 : 0) + bonusNormalNum,
-      special: (criticalcheck ? 20 : 0) + bonusSpecialNum,
+      special: bonusSpecialNum,
+      criticalChance: calcAttackerCriticalChancePreview(attackerCombatant),
     };
-  }, [attackerCombatant, directcheck, criticalcheck, bonusNormal, bonusSpecial]);
+  }, [attackerCombatant, directcheck, bonusNormal, bonusSpecial]);
 
   const receiverPreview = useMemo<CombatantPreview | null>(() => {
     if (!receiverCombatant) return null;
@@ -184,7 +184,6 @@ export const useDamageApplyForm = (tokens: TokenOption[]): DamageApplyFormState 
           attacker: attackerRecord.combatant,
           receiver: receiverRecord.combatant,
           baseDamage: base,
-          criticalcheck,
           directcheck,
           attackerBonusNormal: bonusNormalNum,
           attackerBonusSpecial: bonusSpecialNum,
@@ -197,6 +196,7 @@ export const useDamageApplyForm = (tokens: TokenOption[]): DamageApplyFormState 
 
       const content = `
 ${attacker.name} → ${receiver.name}<br/>
+${calcResult.criticalHit ? "クリティカル発生!!<br/>" : ""}
 基礎ダメージ: ${base}<br/>
 HPダメージ: ${calcResult.hpDamageApplied} (バリア吸収: ${calcResult.barrierAbsorbed})<br/>
 混乱ダメージ: ${calcResult.confDamageApplied}<br/>
@@ -224,7 +224,6 @@ SANダメージ(沈潜): ${calcResult.sanDamageApplied}<br/>
     baseDamage,
     bonusNormal,
     bonusSpecial,
-    criticalcheck,
     directcheck,
     result,
     running,
@@ -235,9 +234,7 @@ SANダメージ(沈潜): ${calcResult.sanDamageApplied}<br/>
     setBaseDamage,
     setBonusNormal,
     setBonusSpecial,
-    setCriticalcheck,
     setDirectcheck,
     run,
   };
 };
-

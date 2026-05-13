@@ -5,6 +5,7 @@ export const statusIds = [
   "Tremor",
   "Bleeding",
   "Poise",
+  "Sword",
   "Regen",
   "Bind",
   "Paralysis",

@@ -109,6 +109,11 @@ export const statusDefinitions: ReadonlyArray<StatusDefinition<StatusId>> = [
     onTurnEnd: decrementOnTurnEnd,
   },
   {
+    id: "Sword",
+    name: "剣気",
+    attribute: { stack: "stackSword" },
+  },
+  {
     id: "Regen",
     name: "再生",
     attribute: { stack: "stackregen", pending: "stackregennext" },

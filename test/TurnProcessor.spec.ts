@@ -91,6 +91,17 @@ describe("TurnProcessor", () => {
     expect(combatant.hp).toBe(60);
   });
 
+  it("Sword は turnEnd で減少しない", () => {
+    const statuses = new StatusSet({
+      Sword: { stack: 50, pending: 0 },
+    });
+    const combatant = createCombatant({ statuses });
+
+    TurnProcessor.turnEnd(combatant);
+
+    expect(combatant.statuses.getStack("Sword")).toBe(50);
+  });
+
   it("Sink は checkNk のとき stack が +2 される", () => {
     const statuses = new StatusSet({
       Sink: { stack: 3, pending: 0 },

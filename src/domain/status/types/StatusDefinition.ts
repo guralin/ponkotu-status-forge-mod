@@ -17,7 +17,6 @@ export type DamageEvent = {
   sanDamageApplied: number;
   barrierAbsorbed: number;
   criticalHit: boolean;
-  poiseCritical: boolean;
   hpAfter: number;
   barrierAfter: number;
   constitutionAfter: number;
