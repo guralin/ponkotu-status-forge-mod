@@ -1,4 +1,5 @@
 import { type StatusSet } from "../status/StatusSet";
+import { type StatusId } from "../status/types/StatusId";
 
 export type CombatantFlags = {
   checkNk: boolean;
@@ -113,6 +114,30 @@ export class Combatant {
     if (this.barrier !== value) {
       this.barrier = value;
     }
+  }
+
+  getStatusStack(statusId: StatusId): number {
+    return this.statuses.getStack(statusId);
+  }
+
+  getStatusPending(statusId: StatusId): number {
+    return this.statuses.getPending(statusId);
+  }
+
+  setStatusStack(statusId: StatusId, next: number): void {
+    this.statuses.setStack(statusId, next);
+  }
+
+  setStatusPending(statusId: StatusId, next: number): void {
+    this.statuses.setPending(statusId, next);
+  }
+
+  addStatusStack(statusId: StatusId, delta: number): void {
+    this.statuses.addStack(statusId, delta);
+  }
+
+  addStatusPending(statusId: StatusId, delta: number): void {
+    this.statuses.addPending(statusId, delta);
   }
 
   setHp(next: number): void {

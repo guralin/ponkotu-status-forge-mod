@@ -1,5 +1,4 @@
 import { type Combatant } from "../domain/combat/Combatant";
-import { createStatusContextFactory } from "../domain/status/StatusContextFactory";
 import { type StatusId } from "../domain/status/types/StatusId";
 import { statusDefinitions } from "../domain/status/StatusDefinitions";
 import {
@@ -44,20 +43,18 @@ export type DamageResult = {
 };
 
 const applyDealDamageStatuses = (source: Combatant, damage: DamageEvent) => {
-  const context = createStatusContextFactory<StatusId>(source);
   const definitions =
     statusDefinitions as ReadonlyArray<StatusDefinition<StatusId>>;
   definitions.forEach((definition) => {
-    definition.onDealDamage?.(context.withDamageStatus(definition.id, damage));
+    definition.onDealDamage?.(source, definition.id, damage);
   });
 };
 
 const applyTakeDamageStatuses = (target: Combatant, damage: DamageEvent) => {
-  const context = createStatusContextFactory<StatusId>(target);
   const definitions =
     statusDefinitions as ReadonlyArray<StatusDefinition<StatusId>>;
   definitions.forEach((definition) => {
-    definition.onTakeDamage?.(context.withDamageStatus(definition.id, damage));
+    definition.onTakeDamage?.(target, definition.id, damage);
   });
 };
 

@@ -5927,10 +5927,10 @@ const Rc = (e) => Math.max(0, Math.floor(e)), Lc = (e, t) => Rc(e * t), Mc = (e,
   },
   {
     id: "checkSora",
-    name: "soraのチェック",
+    name: "soraチェック",
     attribute: { stack: "checkSora" },
     onTurnEnd: (e) => {
-      e.getStack(e.statusId) > 0 && (console.log(e, "コアSoraを所持しているため、煙スタックを7増加させる"), e.addStack("Smoke", 7));
+      e.getStack(e.statusId) > 0 && e.addStack("Smoke", 7);
     }
   }
 ], vp = we.map((e) => e.attribute.stack), yp = (e) => {
