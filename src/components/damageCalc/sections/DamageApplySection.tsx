@@ -115,7 +115,7 @@ export const DamageApplySection = ({ tokens }: Props) => {
 
       {attackerPreview !== null && receiverPreview !== null && (
         <div className="ponkotu-damage__row ponkotu-damage__total-preview">
-      {/* TODO：計算ロジックはcombatCalculatorから参照する形にしたい */}
+          {/* TODO：計算ロジックはcombatCalculatorから参照する形にしたい */}
           <span>攻撃者 - 防御者 の倍率差</span>
           <div/>
           <span>通常倍率: {formatPercentage(attackerPreview.normal - receiverPreview.normal)}</span>
