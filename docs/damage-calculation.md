@@ -209,8 +209,10 @@ nextSink = floor(sink / 2)
 
 内部では `DamageEvent` を組み立て、全ステータス定義に対して次を順に呼ぶ。
 
-1. 攻撃者側 `onDealDamage`
-2. 防御者側 `onTakeDamage`
+1. 攻撃者側 `onMatchDamage`
+2. 防御者側 `onMatchDamage`
+3. 攻撃者側 `onDealDamage`
+4. 防御者側 `onTakeDamage`
 
 呼び出し対象は `statusDefinitions` の全要素で、各定義の該当ハンドラが存在する場合のみ実行される。
 
@@ -226,7 +228,7 @@ nextSink = floor(sink / 2)
 
 ### `result` はフック適用前のスナップショット
 
-`DamageResult` と `DamageEvent` は、`onDealDamage` / `onTakeDamage` を呼ぶ前に作られる。
+`DamageResult` と `DamageEvent` は、`onMatchDamage` / `onDealDamage` / `onTakeDamage` を呼ぶ前に作られる。
 
 そのため、ダメージ後フックが HP・体力・SAN・バリアをさらに変更した場合:
 

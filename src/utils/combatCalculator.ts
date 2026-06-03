@@ -6,6 +6,9 @@ import {
   type StatusDefinition,
 } from "../domain/status/types/StatusDefinition";
 
+const statusDefinitionList =
+  statusDefinitions as ReadonlyArray<StatusDefinition<StatusId>>;
+
 export type DamageInput = {
   attacker: Combatant;
   receiver: Combatant;
@@ -41,17 +44,19 @@ export type DamageResult = {
 };
 
 const applyDealDamageStatuses = (source: Combatant, damage: DamageEvent) => {
-  const definitions =
-    statusDefinitions as ReadonlyArray<StatusDefinition<StatusId>>;
-  definitions.forEach((definition) => {
+  statusDefinitionList.forEach((definition) => {
     definition.onDealDamage?.(source, definition.id, damage);
   });
 };
 
+const applyMatchDamageStatuses = (combatant: Combatant, damage: DamageEvent) => {
+  statusDefinitionList.forEach((definition) => {
+    definition.onMatchDamage?.(combatant, definition.id, damage);
+  });
+};
+
 const applyTakeDamageStatuses = (target: Combatant, damage: DamageEvent) => {
-  const definitions =
-    statusDefinitions as ReadonlyArray<StatusDefinition<StatusId>>;
-  definitions.forEach((definition) => {
+  statusDefinitionList.forEach((definition) => {
     definition.onTakeDamage?.(target, definition.id, damage);
   });
 };
@@ -251,11 +256,10 @@ export const applyDamage = (
     sanAfter: san,
   };
 
-  receiver.hp = hp;
+  receiver.setHp(hp);
   receiver.setBarrier(barrier);
   receiver.setConstitution(constitution);
   receiver.setSan(san);
-  receiver.setHp(hp);
 
   receiver.statuses.setStack("Sink", nextStacksink);
 
@@ -277,6 +281,9 @@ export const applyDamage = (
     sanAfter: san,
   };
 
+  // MatchDamageを先に発動させる
+  applyMatchDamageStatuses(attacker, damageEvent);
+  applyMatchDamageStatuses(receiver, damageEvent);
   applyDealDamageStatuses(attacker, damageEvent);
   applyTakeDamageStatuses(receiver, damageEvent);
 
