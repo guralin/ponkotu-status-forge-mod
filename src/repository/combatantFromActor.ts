@@ -4,8 +4,22 @@ import { type StatusId } from "../domain/status/types/StatusId";
 import { statusDefinitions } from "../domain/status/StatusDefinitions";
 import { StatusSet } from "../domain/status/StatusSet";
 
+type ActorAttributeValue = {
+  value?: unknown;
+  max?: unknown;
+};
+
+type ActorSystemAttributes = {
+  attributes?: Record<string, ActorAttributeValue | undefined>;
+};
+
+const getAttributes = (actor: Actor): Record<string, ActorAttributeValue | undefined> => {
+  const system = actor.system as unknown as ActorSystemAttributes;
+  return system.attributes ?? {};
+};
+
 const getAttrValue = (actor: Actor, key: string, fallback = 0): number => {
-  const raw = (actor.system as any)?.attributes?.[key]?.value;
+  const raw = getAttributes(actor)[key]?.value;
   if (typeof raw === "number" && Number.isFinite(raw)) return raw;
   if (typeof raw === "boolean") return raw ? 1 : 0;
   const parsed = Number(raw);
@@ -13,7 +27,7 @@ const getAttrValue = (actor: Actor, key: string, fallback = 0): number => {
 };
 
 const getAttrMax = (actor: Actor, key: string, fallback = 0): number => {
-  const raw = (actor.system as any)?.attributes?.[key]?.max;
+  const raw = getAttributes(actor)[key]?.max;
   if (typeof raw === "number" && Number.isFinite(raw)) return raw;
   const parsed = Number(raw);
   return Number.isFinite(parsed) ? parsed : fallback;

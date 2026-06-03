@@ -20,3 +20,110 @@ export const RANDOM_TARGET_OPTIONS = [
   { value: "random:enemy" as const, label: "ランダム（敵）" },
   { value: "random:all" as const, label: "ランダム（全体）" },
 ] as const;
+
+export type SelectOption = {
+  value: string;
+  label: string;
+  disabled?: boolean;
+  group?: string;
+};
+
+export type CombatantPreviewViewModel = {
+  normal: number;
+  special: number;
+  criticalChance?: number;
+};
+
+export type DamageResultViewModel = {
+  attackerNormalPercentage: number;
+  receiverNormalPercentage: number;
+  normalRatio: number;
+  attackerSpecialPercentage: number;
+  receiverSpecialPercentage: number;
+  specialRatio: number;
+  criticalHit: boolean;
+  receiverSpecialConfPercentage: number;
+  specialConfRatio: number;
+  hpDamageApplied: number;
+  barrierAbsorbed: number;
+  confDamageApplied: number;
+  sanDamageApplied: number;
+  hpAfter: number;
+  barrierAfter: number;
+  constitutionAfter: number;
+  sanAfter: number;
+};
+
+export type DamageApplyViewModel = {
+  selectedAttackerId: string;
+  selectedReceiverId: string;
+  baseDamage: string;
+  bonusNormal: string;
+  bonusSpecial: string;
+  directAttack: boolean;
+  isRunning: boolean;
+  canRun: boolean;
+  attackerPreview: CombatantPreviewViewModel | null;
+  receiverPreview: CombatantPreviewViewModel | null;
+  result: DamageResultViewModel | null;
+};
+
+export type DamageApplyActions = {
+  onAttackerChange: (value: string) => void;
+  onReceiverChange: (value: string) => void;
+  onBaseDamageChange: (value: string) => void;
+  onBonusNormalChange: (value: string) => void;
+  onBonusSpecialChange: (value: string) => void;
+  onDirectAttackChange: (value: boolean) => void;
+  onRunClick: () => Promise<void>;
+};
+
+export type TurnProcessViewModel = {
+  isRunning: boolean;
+  canRun: boolean;
+};
+
+export type TurnProcessActions = {
+  onRunClick: () => Promise<void>;
+};
+
+export type StatusLibraryEntryViewModel = {
+  id: string;
+  name: string;
+  stack: number;
+  pending: number;
+  hasPending: boolean;
+};
+
+export type StatusApplyViewModel = {
+  selectedTargetValue: string;
+  targetOptions: SelectOption[];
+  selectedStatusValue: string;
+  statusOptions: SelectOption[];
+  selectedApplyTargetValue: string;
+  applyTargetOptions: SelectOption[];
+  stack: string;
+  isRunning: boolean;
+  canRun: boolean;
+};
+
+export type StatusApplyActions = {
+  onTargetChange: (value: string) => void;
+  onStatusChange: (value: string) => void;
+  onApplyTargetChange: (value: string) => void;
+  onStackChange: (value: string) => void;
+  onRunClick: () => Promise<void>;
+};
+
+export type StatusLibraryViewModel = {
+  selectedTargetValue: string;
+  targetOptions: SelectOption[];
+  isOpen: boolean;
+  canToggle: boolean;
+  entries: StatusLibraryEntryViewModel[];
+};
+
+export type StatusLibraryActions = {
+  onTargetChange: (value: string) => void;
+  onToggleClick: () => void;
+};

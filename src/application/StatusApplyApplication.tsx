@@ -1,5 +1,5 @@
 import ReactDOM from "react-dom/client";
-import { StatusApply } from "../components/StatusApply";
+import { StatusApplyContainer } from "./StatusApplyContainer";
 
 const MODULE_ID = "ponkotu-system";
 
@@ -29,7 +29,7 @@ export class StatusApplyApplication extends Application {
     }
 
     this.#root = ReactDOM.createRoot(container);
-    this.#root.render(<StatusApply />);
+    this.#root.render(<StatusApplyContainer />);
   }
 
   override async close(options?: Application.CloseOptions | undefined) {

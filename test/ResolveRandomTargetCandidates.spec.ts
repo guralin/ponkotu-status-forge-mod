@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveRandomTargetCandidates } from "../src/components/damageCalc/hooks/useStatusApplyForm";
+import { resolveRandomTargetCandidates } from "../src/application/damageCalc/resolveRandomTargetCandidates";
 import { type TokenOption } from "../src/components/damageCalc/types";
 import { TOKEN_DISPOSITIONS } from "../src/components/damageCalc/tokenDispositions";
 

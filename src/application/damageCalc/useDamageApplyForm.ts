@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { type Combatant } from "../../../domain/combat/Combatant";
-import { CombatantRepository } from "../../../repository/CombatantRepository";
+import { type TokenOption } from "../../components/damageCalc/types";
+import { type Combatant } from "../../domain/combat/Combatant";
+import { CombatantRepository } from "../../repository/CombatantRepository";
+import { TOKEN_DISPOSITIONS } from "../../components/damageCalc/tokenDispositions";
 import {
   applyDamage,
   calcAttackerCriticalChancePreview,
@@ -8,9 +10,7 @@ import {
   calcReceiverNormalPreview,
   calcReceiverSpecialPreview,
   type DamageResult,
-} from "../../../utils/combatCalculator";
-import { type TokenOption } from "../types";
-import { TOKEN_DISPOSITIONS } from "../tokenDispositions";
+} from "../../utils/combatCalculator";
 
 const pickDefaultAttacker = (list: TokenOption[]) =>
   list.find((token) => token.disposition === TOKEN_DISPOSITIONS.FRIENDLY)?.actorId ?? list[0]?.actorId ?? "";
@@ -100,11 +100,7 @@ export const useDamageApplyForm = (tokens: TokenOption[]): DamageApplyFormState 
     try {
       const repository = new CombatantRepository();
       const record = repository.loadByActorId(attackerId);
-      if (!record) {
-        setAttackerCombatant(null);
-        return;
-      }
-      setAttackerCombatant(record.combatant);
+      setAttackerCombatant(record?.combatant ?? null);
     } catch {
       setAttackerCombatant(null);
     }
@@ -118,11 +114,7 @@ export const useDamageApplyForm = (tokens: TokenOption[]): DamageApplyFormState 
     try {
       const repository = new CombatantRepository();
       const record = repository.loadByActorId(receiverId);
-      if (!record) {
-        setReceiverCombatant(null);
-        return;
-      }
-      setReceiverCombatant(record.combatant);
+      setReceiverCombatant(record?.combatant ?? null);
     } catch {
       setReceiverCombatant(null);
     }
@@ -208,7 +200,7 @@ SANダメージ(沈潜): ${calcResult.sanDamageApplied}<br/>
       });
       setResult(calcResult);
       ui.notifications?.info(
-        `${attacker.name} が ${receiver.name} にダメージを適用しました`
+        `${attacker.name} が ${receiver.name} にダメージを適用しました`,
       );
     } catch (error) {
       console.error("[ponkotu-system] damage calc failed", error);

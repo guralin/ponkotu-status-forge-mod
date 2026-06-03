@@ -13,7 +13,6 @@ export const SimpleForm = ({ onSubmit }: SimpleFormProps) => {
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const payload = { name: name.trim(), note: note.trim() };
-    console.log("[ponkotu-system] SimpleForm submit", payload);
     onSubmit?.(payload);
     setNote("");
   };

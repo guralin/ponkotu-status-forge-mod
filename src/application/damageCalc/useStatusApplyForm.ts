@@ -1,31 +1,18 @@
 import { useEffect, useState } from "react";
+import { executeApplyStatusAsGM } from "../socketManager";
 import {
   type ApplyStatusTarget,
-} from "../../../application/usecases/applyStatusStack";
-import { executeApplyStatusAsGM } from "../../../application/socketManager";
-import { statusDefinitions } from "../../../domain/status/StatusDefinitions";
-import { type StatusId } from "../../../domain/status/types/StatusId";
-import { type TokenOption, type StatusTargetValue } from "../types";
-import { TOKEN_DISPOSITIONS } from "../tokenDispositions";
+} from "../usecases/applyStatusStack";
+import { type StatusTargetValue, type TokenOption } from "../../components/damageCalc/types";
+import { statusDefinitions } from "../../domain/status/StatusDefinitions";
+import { type StatusId } from "../../domain/status/types/StatusId";
+import {
+  isRandomTarget,
+  resolveRandomTargetCandidates,
+} from "./resolveRandomTargetCandidates";
 
 const statusIds = statusDefinitions.map((definition) => definition.id as StatusId);
 const pickDefaultStatusId = (): StatusId => statusIds[0] ?? "Burned";
-
-/** ランダム対象キーワードかどうかを判定 */
-const isRandomTarget = (value: string): value is "random:ally" | "random:enemy" | "random:all" =>
-  value === "random:ally" || value === "random:enemy" || value === "random:all";
-
-/** ランダム対象候補の解決 */
-export const resolveRandomTargetCandidates = (
-  value: "random:ally" | "random:enemy" | "random:all",
-  tokens: TokenOption[]
-): TokenOption[] => {
-  if (value === "random:all") return tokens;
-  if (value === "random:ally")
-    return tokens.filter((t) => t.disposition === TOKEN_DISPOSITIONS.FRIENDLY);
-  // random:enemy
-  return tokens.filter((t) => t.disposition !== TOKEN_DISPOSITIONS.FRIENDLY);
-};
 
 export type StatusApplyFormState = {
   statusTargetValue: StatusTargetValue;
@@ -42,7 +29,7 @@ export type StatusApplyFormState = {
 };
 
 export const useStatusApplyForm = (
-  tokens: TokenOption[]
+  tokens: TokenOption[],
 ): StatusApplyFormState => {
   const [statusTargetValue, setStatusTargetValue] = useState<StatusTargetValue>("");
   const [statusId, setStatusId] = useState<StatusId>(pickDefaultStatusId);
@@ -51,15 +38,14 @@ export const useStatusApplyForm = (
   const [statusRunning, setStatusRunning] = useState(false);
 
   const selectedDefinition = statusDefinitions.find(
-    (definition) => definition.id === statusId
+    (definition) => definition.id === statusId,
   );
   const canApplyPending = Boolean(
     selectedDefinition &&
       "pending" in selectedDefinition.attribute &&
-      selectedDefinition.attribute.pending
+      selectedDefinition.attribute.pending,
   );
 
-  // 初期値・トークン変化時の同期
   useEffect(() => {
     if (!tokens.length) {
       if (statusTargetValue && !isRandomTarget(statusTargetValue)) {
@@ -89,7 +75,6 @@ export const useStatusApplyForm = (
       return;
     }
 
-    // ランダム対象の解決
     let resolvedActorId: string;
     if (isRandomTarget(statusTargetValue)) {
       const candidates = resolveRandomTargetCandidates(statusTargetValue, tokens);
@@ -116,10 +101,10 @@ export const useStatusApplyForm = (
         stackDelta,
         target: applyTarget,
       });
-      const statusName = statusDefinitions.find(d => d.id === result.statusId)?.name ?? result.statusId;
+      const statusName = statusDefinitions.find((definition) => definition.id === result.statusId)?.name ?? result.statusId;
       const targetLabel = result.target === "pending" ? "next" : "現在";
       ui.notifications?.info(
-        `${result.actorName} に ${result.statusId}(${targetLabel}) を ${stackDelta} 付与しました (${result.before}→${result.after})`
+        `${result.actorName} に ${result.statusId}(${targetLabel}) を ${stackDelta} 付与しました (${result.before}→${result.after})`,
       );
       await ChatMessage.create({
         speaker: { alias: game.user?.name ?? "不明" },

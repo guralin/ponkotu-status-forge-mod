@@ -1,12 +1,16 @@
-import { useTurnProcessForm } from "../hooks/useTurnProcessForm";
-import { type TokenOption } from "../types";
+import {
+  type TurnProcessActions,
+  type TurnProcessViewModel,
+} from "../types";
 
 type Props = {
-  tokens: TokenOption[];
+  model: TurnProcessViewModel;
+  actions: TurnProcessActions;
 };
 
-export const TurnProcessSection = ({ tokens }: Props) => {
-  const { turnRunning, runTurnProcess } = useTurnProcessForm(tokens);
+export const TurnProcessSection = ({ model, actions }: Props) => {
+  const { isRunning, canRun } = model;
+  const { onRunClick } = actions;
 
   return (
     <>
@@ -15,8 +19,8 @@ export const TurnProcessSection = ({ tokens }: Props) => {
       </div>
 
       <div className="ponkotu-damage__row">
-        <button onClick={runTurnProcess} disabled={turnRunning || tokens.length < 1}>
-          {turnRunning ? "処理中..." : "ターン処理(終了→開始)"}
+        <button onClick={onRunClick} disabled={isRunning || !canRun}>
+          {isRunning ? "処理中..." : "ターン処理(終了→開始)"}
         </button>
       </div>
     </>
