@@ -51,13 +51,13 @@ export default defineConfig(
         "error",
         { prefer: "type-imports" },
       ],
-      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/no-unused-vars": [
         "error",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
       ],
       eqeqeq: ["error", "always"],
-      "no-console": ["warn", { allow: ["warn", "error"] }],
+      "no-console": ["error", { allow: ["warn", "error"] }],
       "no-var": "error",
       "prefer-const": "error",
       semi: ["warn", "always"],
@@ -99,7 +99,7 @@ export default defineConfig(
     files: ["src/components/**/*.{ts,tsx}"],
     rules: {
       "no-restricted-imports": [
-        "warn",
+        "error",
         {
           patterns: [
             {
