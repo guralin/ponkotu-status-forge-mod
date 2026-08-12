@@ -1,35 +1,62 @@
-import { statusDefinitions } from "../../../domain/status/StatusDefinitions";
-import { type StatusId } from "../../../domain/status/types/StatusId";
-import { useStatusApplyForm } from "../hooks/useStatusApplyForm";
-import { useStatusLibrary } from "../hooks/useStatusLibrary";
-import { type TokenOption, optionLabel, RANDOM_TARGET_OPTIONS } from "../types";
+import {
+  type StatusApplyActions,
+  type StatusApplyViewModel,
+  type StatusLibraryActions,
+  type StatusLibraryViewModel,
+} from "../types";
+
+const ungroupedOptions = (options: StatusApplyViewModel["targetOptions"]) =>
+  options.filter((option) => !option.group);
+
+const groupedOptions = (
+  options: StatusApplyViewModel["targetOptions"],
+  group: string,
+) => options.filter((option) => option.group === group);
 
 type Props = {
-  tokens: TokenOption[];
+  statusModel: StatusApplyViewModel;
+  statusActions: StatusApplyActions;
+  libraryModel: StatusLibraryViewModel;
+  libraryActions: StatusLibraryActions;
 };
 
-export const StatusApplySection = ({ tokens }: Props) => {
+export const StatusApplySection = ({
+  statusModel,
+  statusActions,
+  libraryModel,
+  libraryActions,
+}: Props) => {
   const {
-    statusTargetValue,
-    statusId,
-    applyTarget,
-    canApplyPending,
-    statusStack,
-    statusRunning,
-    setStatusTargetValue,
-    setStatusId,
-    setApplyTarget,
-    setStatusStack,
-    runApplyStatus,
-  } = useStatusApplyForm(tokens);
+    selectedTargetValue,
+    targetOptions,
+    selectedStatusValue,
+    statusOptions,
+    selectedApplyTargetValue,
+    applyTargetOptions,
+    stack,
+    isRunning,
+    canRun,
+  } = statusModel;
+  const {
+    onTargetChange,
+    onStatusChange,
+    onApplyTargetChange,
+    onStackChange,
+    onRunClick,
+  } = statusActions;
 
   const {
-    libraryTargetValue,
-    libraryOpen,
-    libraryEntries,
-    setLibraryTargetValue,
-    toggleLibrary,
-  } = useStatusLibrary();
+    selectedTargetValue: selectedLibraryTargetValue,
+    targetOptions: libraryTargetOptions,
+    isOpen: isLibraryOpen,
+    canToggle: canToggleLibrary,
+    entries,
+  } = libraryModel;
+  const {
+    onTargetChange: onLibraryTargetChange,
+    onToggleClick,
+  } = libraryActions;
+  const targetRandomOptions = groupedOptions(targetOptions, "ランダム");
 
   return (
     <>
@@ -41,34 +68,44 @@ export const StatusApplySection = ({ tokens }: Props) => {
         <label className="ponkotu-damage__label">
           対象キャラ
           <select
-            value={statusTargetValue}
-            onChange={(e) => setStatusTargetValue(e.target.value)}
+            value={selectedTargetValue}
+            onChange={(e) => onTargetChange(e.target.value)}
           >
             <option value="">選択してください</option>
-            {tokens.map((token) => (
-              <option key={`status-target-${token.actorId}`} value={token.actorId}>
-                {optionLabel(token)}
+            {ungroupedOptions(targetOptions).map((option) => (
+              <option
+                key={`status-target-${option.value}`}
+                value={option.value}
+                disabled={option.disabled}
+              >
+                {option.label}
               </option>
             ))}
-            <optgroup label="ランダム">
-              {RANDOM_TARGET_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </optgroup>
+            {targetRandomOptions.length > 0 && (
+              <optgroup label="ランダム">
+                {targetRandomOptions.map((option) => (
+                  <option
+                    key={`status-target-${option.value}`}
+                    value={option.value}
+                    disabled={option.disabled}
+                  >
+                    {option.label}
+                  </option>
+                ))}
+              </optgroup>
+            )}
           </select>
         </label>
 
         <label className="ponkotu-damage__label">
           状態異常
           <select
-            value={statusId}
-            onChange={(e) => setStatusId(e.target.value as StatusId)}
+            value={selectedStatusValue}
+            onChange={(e) => onStatusChange(e.target.value)}
           >
-            {statusDefinitions.map((definition) => (
-              <option key={definition.id} value={definition.id}>
-                {definition.name}
+            {statusOptions.map((option) => (
+              <option key={option.value} value={option.value} disabled={option.disabled}>
+                {option.label}
               </option>
             ))}
           </select>
@@ -77,13 +114,14 @@ export const StatusApplySection = ({ tokens }: Props) => {
         <label className="ponkotu-damage__label">
           付与先
           <select
-            value={applyTarget}
-            onChange={(e) => setApplyTarget(e.target.value as "stack" | "pending")}
+            value={selectedApplyTargetValue}
+            onChange={(e) => onApplyTargetChange(e.target.value)}
           >
-            <option value="stack">現在</option>
-            <option value="pending" disabled={!canApplyPending}>
-              次ターン(next)
-            </option>
+            {applyTargetOptions.map((option) => (
+              <option key={option.value} value={option.value} disabled={option.disabled}>
+                {option.label}
+              </option>
+            ))}
           </select>
         </label>
       </div>
@@ -94,15 +132,15 @@ export const StatusApplySection = ({ tokens }: Props) => {
           type="number"
           min={1}
           step={1}
-          value={statusStack}
-          onChange={(e) => setStatusStack(e.target.value)}
+          value={stack}
+          onChange={(e) => onStackChange(e.target.value)}
           placeholder="例: 3"
         />
       </label>
 
       <div className="ponkotu-damage__row">
-        <button onClick={runApplyStatus} disabled={statusRunning || tokens.length < 1}>
-          {statusRunning ? "付与中..." : "状態異常を付与"}
+        <button onClick={onRunClick} disabled={isRunning || !canRun}>
+          {isRunning ? "付与中..." : "状態異常を付与"}
         </button>
       </div>
 
@@ -114,26 +152,30 @@ export const StatusApplySection = ({ tokens }: Props) => {
         <label className="ponkotu-damage__label">
           対象キャラ
           <select
-            value={libraryTargetValue}
-            onChange={(e) => setLibraryTargetValue(e.target.value)}
+            value={selectedLibraryTargetValue}
+            onChange={(e) => onLibraryTargetChange(e.target.value)}
           >
             <option value="">選択してください</option>
-            {tokens.map((token) => (
-              <option key={`library-target-${token.actorId}`} value={token.actorId}>
-                {optionLabel(token)}
+            {libraryTargetOptions.map((option) => (
+              <option
+                key={`library-target-${option.value}`}
+                value={option.value}
+                disabled={option.disabled}
+              >
+                {option.label}
               </option>
             ))}
           </select>
         </label>
 
-        <button disabled={!libraryTargetValue} onClick={toggleLibrary}>
-          {libraryOpen ? "閉じる" : "表示"}
+        <button disabled={!canToggleLibrary} onClick={onToggleClick}>
+          {isLibraryOpen ? "閉じる" : "表示"}
         </button>
       </div>
 
-      {libraryOpen && (
+      {isLibraryOpen && (
         <div className="ponkotu-damage__row" style={{ flexDirection: "column" }}>
-          {libraryEntries.length === 0 ? (
+          {entries.length === 0 ? (
             <span>状態異常なし</span>
           ) : (
             <table style={{ fontSize: "0.9em", width: "100%" }}>
@@ -145,7 +187,7 @@ export const StatusApplySection = ({ tokens }: Props) => {
                 </tr>
               </thead>
               <tbody>
-                {libraryEntries.map((entry) => (
+                {entries.map((entry) => (
                   <tr key={entry.id}>
                     <td>{entry.name}</td>
                     <td>{entry.stack}</td>

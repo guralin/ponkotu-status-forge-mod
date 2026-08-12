@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildLibraryEntries } from "../src/components/damageCalc/hooks/useStatusLibrary";
+import { buildLibraryEntries } from "../src/application/damageCalc/statusLibrary";
 import { StatusSet } from "../src/domain/status/StatusSet";
 import { type StatusDefinition } from "../src/domain/status/types/StatusDefinition";
 

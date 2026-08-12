@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { TurnProcessor } from "../../../domain/combat/TurnProcessor";
-import { CombatantRepository } from "../../../repository/CombatantRepository";
-import { type TokenOption } from "../types";
+import { type TokenOption } from "../../components/damageCalc/types";
+import { TurnProcessor } from "../../domain/combat/TurnProcessor";
+import { CombatantRepository } from "../../repository/CombatantRepository";
 
 const collectTargetIds = (tokens: TokenOption[]): string[] =>
   Array.from(new Set(tokens.map((token) => token.actorId).filter((id) => id)));
@@ -12,7 +12,7 @@ export type TurnProcessFormState = {
 };
 
 export const useTurnProcessForm = (
-  tokens: TokenOption[]
+  tokens: TokenOption[],
 ): TurnProcessFormState => {
   const [turnRunning, setTurnRunning] = useState(false);
 

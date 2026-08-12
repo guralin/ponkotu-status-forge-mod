@@ -1,10 +1,10 @@
-import { type DamageResult } from "../../../utils/combatCalculator";
+import { type DamageResultViewModel } from "../types";
 
 const formatNumber = (value: number) =>
   Number.isFinite(value) ? value.toLocaleString() : "-";
 
 type Props = {
-  result: DamageResult;
+  result: DamageResultViewModel;
 };
 
 export const DamageResultPanel = ({ result }: Props) => (

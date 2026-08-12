@@ -4,7 +4,6 @@ import { StatusApplyApplication } from "./StatusApplyApplication";
 import { registerSocket } from "./socketManager";
 
 const MODULE_ID = "ponkotu-system";
-const log = (...args: unknown[]) => console.log(`[${MODULE_ID}]`, ...args);
 
 export const showReactForm = () => new ReactFormApplication().render(true);
 export const showDamageCalc = () => new DamageCalcApplication().render(true);
@@ -22,14 +21,10 @@ const registerApi = () => {
   target.api.showReactForm = showReactForm;
   target.api.showDamageCalc = showDamageCalc;
   target.api.showStatusApply = showStatusApply;
-  log("API を登録しました", target.api);
 };
 
 export const initializePonkotuSystem = () => {
-  log("ES module loaded");
-
   Hooks.once("ready", () => {
-    log("Hooks.once ready fired");
     registerApi();
 
     // デバッグ用にグローバルへも公開
@@ -40,18 +35,14 @@ export const initializePonkotuSystem = () => {
         showStatusApply: typeof showStatusApply;
       };
     }).ponkotuSystem = { showReactForm, showDamageCalc, showStatusApply };
-
-    log("React フォーム API を初期化しました");
   });
 
   Hooks.once("init", () => {
-    log("Hooks.once init fired");
     // init 時点でも API を仕込んでおくことで、ready 前に参照しても undefined にならないようにする
     registerApi();
   });
 
   Hooks.once("socketlib.ready", () => {
-    log("Hooks.once socketlib.ready fired");
     registerSocket(MODULE_ID);
   });
 };

@@ -161,7 +161,7 @@ describe("combatCalculator", () => {
     expect(nextReceiver.statuses.getStack("Sink")).toBe(2);
   });
 
-  it("呪印【出血】は被クリティカル時に出血を消費せず追加ダメージを与えて 1 減少する", () => {
+  it("呪印【出血】は被クリティカル時に onMatchDamage 後の出血追加ダメージを与えて 1 減少する", () => {
     const receiver = createActor({
       hp: 100,
       constitution: 10,
@@ -179,9 +179,32 @@ describe("combatCalculator", () => {
       { random: () => 0.999 }
     );
 
-    expect(nextReceiver.hp).toBe(82);
-    expect(nextReceiver.statuses.getStack("Bleeding")).toBe(6);
+    expect(nextReceiver.hp).toBe(78);
+    expect(nextReceiver.statuses.getStack("Bleeding")).toBe(4);
     expect(nextReceiver.statuses.getStack("StackSealBleed")).toBe(1);
+  });
+
+  it("onMatchDamage は与ダメージ側と被ダメージ側の両方で onDealDamage/onTakeDamage より前に適用される", () => {
+    const attacker = createActor({
+      hp: 50,
+      constitution: 10,
+      statuses: new StatusSet({ Bleeding: { stack: 3, pending: 0 } }),
+    });
+    const receiver = createActor({
+      hp: 100,
+      constitution: 10,
+      statuses: new StatusSet({ Bleeding: { stack: 4, pending: 0 } }),
+    });
+
+    const { attacker: nextAttacker, receiver: nextReceiver } = applyDamage(
+      { attacker, receiver, baseDamage: 10 },
+      { random: () => 0.999 }
+    );
+
+    expect(nextAttacker.hp).toBe(47);
+    expect(nextAttacker.statuses.getStack("Bleeding")).toBe(2);
+    expect(nextReceiver.hp).toBe(86);
+    expect(nextReceiver.statuses.getStack("Bleeding")).toBe(3);
   });
 });
 

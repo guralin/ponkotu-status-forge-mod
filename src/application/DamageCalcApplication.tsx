@@ -1,5 +1,5 @@
 import ReactDOM from "react-dom/client";
-import { DamageCalc } from "../components/DamageCalc";
+import { DamageCalcContainer } from "./DamageCalcContainer";
 
 const MODULE_ID = "ponkotu-system";
 
@@ -29,7 +29,7 @@ export class DamageCalcApplication extends Application {
     }
 
     this.#root = ReactDOM.createRoot(container);
-    this.#root.render(<DamageCalc />);
+    this.#root.render(<DamageCalcContainer />);
   }
 
   override async close(options?: Application.CloseOptions | undefined) {

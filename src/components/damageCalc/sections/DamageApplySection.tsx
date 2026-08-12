@@ -1,36 +1,45 @@
-import { useDamageApplyForm } from "../hooks/useDamageApplyForm";
-import { type TokenOption, optionLabel } from "../types";
+import {
+  type DamageApplyActions,
+  type DamageApplyViewModel,
+  type TokenOption,
+  optionLabel,
+} from "../types";
 import { DamageResultPanel } from "./DamageResultPanel";
-
-type Props = {
-  tokens: TokenOption[];
-};
 
 const formatPercentage = (value: number): string => {
   if (value === 0) return "±0%";
   return value > 0 ? `+${value}%` : `${value}%`;
 };
 
-export const DamageApplySection = ({ tokens }: Props) => {
+type Props = {
+  tokens: TokenOption[];
+  model: DamageApplyViewModel;
+  actions: DamageApplyActions;
+};
+
+export const DamageApplySection = ({ tokens, model, actions }: Props) => {
   const {
-    attackerId,
-    receiverId,
+    selectedAttackerId,
+    selectedReceiverId,
     baseDamage,
     bonusNormal,
     bonusSpecial,
-    directcheck,
+    directAttack,
     result,
-    running,
+    isRunning,
+    canRun,
     attackerPreview,
     receiverPreview,
-    setAttackerId,
-    setReceiverId,
-    setBaseDamage,
-    setBonusNormal,
-    setBonusSpecial,
-    setDirectcheck,
-    run,
-  } = useDamageApplyForm(tokens);
+  } = model;
+  const {
+    onAttackerChange,
+    onReceiverChange,
+    onBaseDamageChange,
+    onBonusNormalChange,
+    onBonusSpecialChange,
+    onDirectAttackChange,
+    onRunClick,
+  } = actions;
 
   return (
     <>
@@ -41,7 +50,7 @@ export const DamageApplySection = ({ tokens }: Props) => {
         <div>
           <label className="ponkotu-damage__label">
             攻撃者: 
-            <select value={attackerId} onChange={(e) => setAttackerId(e.target.value)}>
+            <select value={selectedAttackerId} onChange={(e) => onAttackerChange(e.target.value)}>
               <option value="">選択してください</option>
               {tokens.map((token) => (
                 <option key={token.actorId} value={token.actorId}>
@@ -62,7 +71,7 @@ export const DamageApplySection = ({ tokens }: Props) => {
         <div>
           <label className="ponkotu-damage__label">
             防御者: 
-            <select value={receiverId} onChange={(e) => setReceiverId(e.target.value)}>
+            <select value={selectedReceiverId} onChange={(e) => onReceiverChange(e.target.value)}>
               <option value="">選択してください</option>
               {tokens.map((token) => (
                 <option key={token.actorId} value={token.actorId}>
@@ -85,7 +94,7 @@ export const DamageApplySection = ({ tokens }: Props) => {
           <input
             type="number"
             value={bonusNormal}
-            onChange={(e) => setBonusNormal(e.target.value)}
+            onChange={(e) => onBonusNormalChange(e.target.value)}
             className="ponkotu-damage__bonus-input"
           />
           %
@@ -95,7 +104,7 @@ export const DamageApplySection = ({ tokens }: Props) => {
           <input
             type="number"
             value={bonusSpecial}
-            onChange={(e) => setBonusSpecial(e.target.value)}
+            onChange={(e) => onBonusSpecialChange(e.target.value)}
             className="ponkotu-damage__bonus-input"
           />
           %
@@ -106,8 +115,8 @@ export const DamageApplySection = ({ tokens }: Props) => {
         <label className="ponkotu-damage__label ponkotu-damage__label--inline">
           <input
             type="checkbox"
-            checked={directcheck}
-            onChange={(e) => setDirectcheck(e.target.checked)}
+            checked={directAttack}
+            onChange={(e) => onDirectAttackChange(e.target.checked)}
           />
           直接攻撃
         </label>
@@ -115,7 +124,7 @@ export const DamageApplySection = ({ tokens }: Props) => {
 
       {attackerPreview !== null && receiverPreview !== null && (
         <div className="ponkotu-damage__row ponkotu-damage__total-preview">
-      {/* TODO：計算ロジックはcombatCalculatorから参照する形にしたい */}
+          {/* TODO：計算ロジックはcombatCalculatorから参照する形にしたい */}
           <span>攻撃者 - 防御者 の倍率差</span>
           <div/>
           <span>通常倍率: {formatPercentage(attackerPreview.normal - receiverPreview.normal)}</span>
@@ -134,14 +143,14 @@ export const DamageApplySection = ({ tokens }: Props) => {
         <input
           type="number"
           value={baseDamage}
-          onChange={(e) => setBaseDamage(e.target.value)}
+          onChange={(e) => onBaseDamageChange(e.target.value)}
           placeholder="例: 12"
         />
       </label>
 
       <div className="ponkotu-damage__row">
-        <button onClick={run} disabled={running || tokens.length < 2}>
-          {running ? "計算中..." : "計算して適用"}
+        <button onClick={onRunClick} disabled={isRunning || !canRun}>
+          {isRunning ? "計算中..." : "計算して適用"}
         </button>
         {tokens.length < 2 && (
           <span className="ponkotu-damage__hint">※ トークンが2体以上必要です</span>

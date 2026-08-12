@@ -1,0 +1,10 @@
+[features]
+hooks = true
+
+[[hooks.Stop]]
+
+[[hooks.Stop.hooks]]
+type = "command"
+command = "bash .codex/ensure-stop-checks.sh"
+timeout = 180
+statusMessage = "Running lint, typecheck, and tests"
