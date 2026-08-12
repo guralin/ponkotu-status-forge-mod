@@ -1,7 +1,14 @@
 import { type StatusId } from "./types/StatusId";
 import { type StatusState } from "./types/StatusState";
+import { getStatusMaxStack } from "./StatusDefinitions";
 
-const normalizeStack = (value: number): number =>
+const normalizeStack = (id: StatusId, value: number): number => {
+  const normalized = Math.max(0, Math.floor(value));
+  const maxStack = getStatusMaxStack(id);
+  return maxStack === undefined ? normalized : Math.min(normalized, maxStack);
+};
+
+const normalizePending = (value: number): number =>
   Math.max(0, Math.floor(value));
 
 export class StatusSet {
@@ -12,8 +19,8 @@ export class StatusSet {
     Object.entries(initial).forEach(([key, value]) => {
       if (!value) return;
       this.#map.set(key as StatusId, {
-        stack: normalizeStack(value.stack),
-        pending: normalizeStack(value.pending),
+        stack: normalizeStack(key as StatusId, value.stack),
+        pending: normalizePending(value.pending),
       });
     });
   }
@@ -34,32 +41,32 @@ export class StatusSet {
 
   setState(id: StatusId, next: StatusState): void {
     this.#map.set(id, {
-      stack: normalizeStack(next.stack),
-      pending: normalizeStack(next.pending),
+      stack: normalizeStack(id, next.stack),
+      pending: normalizePending(next.pending),
     });
   }
 
   setStack(id: StatusId, next: number): void {
     const current = this.#map.get(id) ?? { stack: 0, pending: 0 };
-    current.stack = normalizeStack(next);
+    current.stack = normalizeStack(id, next);
     this.#map.set(id, current);
   }
 
   setPending(id: StatusId, next: number): void {
     const current = this.#map.get(id) ?? { stack: 0, pending: 0 };
-    current.pending = normalizeStack(next);
+    current.pending = normalizePending(next);
     this.#map.set(id, current);
   }
 
   addStack(id: StatusId, delta: number): void {
     const current = this.#map.get(id) ?? { stack: 0, pending: 0 };
-    current.stack = normalizeStack(current.stack + delta);
+    current.stack = normalizeStack(id, current.stack + delta);
     this.#map.set(id, current);
   }
 
   addPending(id: StatusId, delta: number): void {
     const current = this.#map.get(id) ?? { stack: 0, pending: 0 };
-    current.pending = normalizeStack(current.pending + delta);
+    current.pending = normalizePending(current.pending + delta);
     this.#map.set(id, current);
   }
 }

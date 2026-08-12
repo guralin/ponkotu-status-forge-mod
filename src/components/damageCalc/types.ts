@@ -35,6 +35,8 @@ export type CombatantPreviewViewModel = {
   whiteApplies: boolean;
   whiteOtherCount: number;
   whitePercentage: number;
+  ankaStack: number;
+  ankaPercentage: number;
 };
 
 export type WhiteEffectViewModel = {
@@ -46,6 +48,10 @@ export type WhiteEffectViewModel = {
 export type DamageResultViewModel = {
   attackerWhiteEffect: WhiteEffectViewModel;
   receiverWhiteEffect: WhiteEffectViewModel;
+  receiverAnkaEffect: {
+    stack: number;
+    percentage: number;
+  };
   attackerNormalPercentage: number;
   receiverNormalPercentage: number;
   normalRatio: number;

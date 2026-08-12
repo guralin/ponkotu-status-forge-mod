@@ -19,6 +19,7 @@ export const statusIds = [
   "Sink",
   "FEOAwaken",
   "Witch1",
+  "Anka",
   "Frenzy",
   "Sinsyoku",
   "Biribiri",

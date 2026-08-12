@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { type TokenOption } from "../../components/damageCalc/types";
 import { type Combatant } from "../../domain/combat/Combatant";
 import { calculateWhiteEffect } from "../../domain/combat/WhiteEffect";
+import { calculateAnkaEffect } from "../../domain/status/Anka";
 import { CombatantRepository } from "../../repository/CombatantRepository";
 import { type CombatantRecord } from "../../repository/ICombatantRepository";
 import { TOKEN_DISPOSITIONS } from "../../components/damageCalc/tokenDispositions";
@@ -38,6 +39,8 @@ export type CombatantPreview = {
   whiteApplies: boolean;
   whiteOtherCount: number;
   whitePercentage: number;
+  ankaStack: number;
+  ankaPercentage: number;
 };
 
 export type DamageApplyFormState = {
@@ -144,12 +147,15 @@ export const useDamageApplyForm = (tokens: TokenOption[]): DamageApplyFormState 
       whiteApplies: whiteEffect.applies,
       whiteOtherCount: whiteEffect.otherWhiteCount,
       whitePercentage: whiteEffect.percentage,
+      ankaStack: 0,
+      ankaPercentage: 0,
     };
   }, [attackerCombatant, sceneCombatants, directcheck, bonusNormal, bonusSpecial]);
 
   const receiverPreview = useMemo<CombatantPreview | null>(() => {
     if (!receiverCombatant) return null;
     const whiteEffect = calculateWhiteEffect(receiverCombatant, sceneCombatants);
+    const ankaEffect = calculateAnkaEffect(receiverCombatant);
     return {
       normal:
         calcReceiverNormalPreview(receiverCombatant) - whiteEffect.percentage,
@@ -157,6 +163,8 @@ export const useDamageApplyForm = (tokens: TokenOption[]): DamageApplyFormState 
       whiteApplies: whiteEffect.applies,
       whiteOtherCount: whiteEffect.otherWhiteCount,
       whitePercentage: whiteEffect.percentage,
+      ankaStack: ankaEffect.stack,
+      ankaPercentage: ankaEffect.percentage,
     };
   }, [receiverCombatant, sceneCombatants]);
 
@@ -218,6 +226,7 @@ ${calcResult.criticalHit ? "クリティカル発生!!<br/>" : ""}
 基礎ダメージ: ${base}<br/>
 ${calcResult.attackerWhiteEffect.applies ? `白化（他の味方${calcResult.attackerWhiteEffect.otherWhiteCount}人）: 与ダメージ +${calcResult.attackerWhiteEffect.percentage}%<br/>` : ""}
 ${calcResult.receiverWhiteEffect.applies ? `白化（他の味方${calcResult.receiverWhiteEffect.otherWhiteCount}人）: 被ダメージ +${calcResult.receiverWhiteEffect.percentage}%<br/>` : ""}
+${calcResult.receiverAnkaEffect.stack > 0 ? `アンカの渦潮 ${calcResult.receiverAnkaEffect.stack}: 被ダメージ +${calcResult.receiverAnkaEffect.percentage}%<br/>` : ""}
 HPダメージ: ${calcResult.hpDamageApplied} (バリア吸収: ${calcResult.barrierAbsorbed})<br/>
 混乱ダメージ: ${calcResult.confDamageApplied}<br/>
 SANダメージ(沈潜): ${calcResult.sanDamageApplied}<br/>

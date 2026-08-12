@@ -9,6 +9,16 @@ const createActor = (attributes: Record<string, unknown>): Actor =>
   }) as unknown as Actor;
 
 describe("combatantFromActor", () => {
+  it("stackAnkaを読み込み時に5スタックへ制限する", () => {
+    const actor = createActor({
+      stackAnka: { value: 9 },
+    });
+
+    const combatant = combatantFromActor(actor);
+
+    expect(combatant.statuses.getStack("Anka")).toBe(5);
+  });
+
   it("Actorの白化3属性をCombatantFlagsへ読み込む", () => {
     const actor = createActor({
       isPlayer: { value: true },

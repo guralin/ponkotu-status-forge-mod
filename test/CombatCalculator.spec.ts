@@ -34,6 +34,28 @@ const createActor = (overrides?: Partial<CombatantParams>): Combatant =>
   });
 
 describe("combatCalculator", () => {
+  it("アンカの渦潮1スタックにつきHP・混乱の被ダメージを5%増加する", () => {
+    const attacker = createActor({ id: "attacker" });
+    const receiver = createActor({
+      id: "receiver",
+      hp: 200,
+      constitution: 200,
+      statuses: new StatusSet({ Anka: { stack: 3, pending: 0 } }),
+    });
+
+    const { result } = applyDamage(
+      { attacker, receiver, baseDamage: 100 },
+      { random: () => 0.999 },
+    );
+
+    expect(result.receiverAnkaEffect).toEqual({ stack: 3, percentage: 15 });
+    expect(result.receiverNormalPercentage).toBe(-15);
+    expect(result.dealDamage).toBeCloseTo(115, 5);
+    expect(result.dealConfDamage).toBeCloseTo(115, 5);
+    expect(result.hpDamageApplied).toBe(115);
+    expect(result.confDamageApplied).toBe(115);
+  });
+
   it("白化した攻撃者と防御者の補正を通常倍率へ同時に加算する", () => {
     const attacker = createActor({
       id: "attacker",
@@ -332,6 +354,19 @@ describe("プレビュー倍率関数", () => {
       }),
     });
     expect(calcReceiverNormalPreview(receiver)).toBe(10);
+  });
+
+  it("calcReceiverNormalPreview はアンカの渦潮を既存補正と加算する", () => {
+    const receiver = createActor({
+      constitution: 10,
+      statuses: new StatusSet({
+        Protection: { stack: 2, pending: 0 },
+        Vulnerable: { stack: 1, pending: 0 },
+        Anka: { stack: 3, pending: 0 },
+      }),
+    });
+
+    expect(calcReceiverNormalPreview(receiver)).toBe(-5);
   });
 
   it("calcReceiverSpecialPreview はプレイヤーなら resist を返す", () => {

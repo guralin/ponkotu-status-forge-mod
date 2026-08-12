@@ -1,4 +1,5 @@
 import { type Combatant } from "../combat/Combatant";
+import { ANKA_MAX_STACK } from "./Anka";
 import { type StatusId } from "./types/StatusId";
 import { type StatusDefinition } from "./types/StatusDefinition";
 
@@ -235,6 +236,12 @@ export const statusDefinitions: ReadonlyArray<StatusDefinition<StatusId>> = [
     },
   },
   {
+    id: "Anka",
+    name: "アンカの渦潮",
+    attribute: { stack: "stackAnka" },
+    maxStack: ANKA_MAX_STACK,
+  },
+  {
     id: "Frenzy",
     name: "狂乱",
     attribute: { stack: "stackfrenzy" },
@@ -319,3 +326,6 @@ export const statusDefinitions: ReadonlyArray<StatusDefinition<StatusId>> = [
     },
   },
 ];
+
+export const getStatusMaxStack = (statusId: StatusId): number | undefined =>
+  statusDefinitions.find((definition) => definition.id === statusId)?.maxStack;

@@ -23,6 +23,17 @@ const createCombatant = (overrides?: Partial<Combatant>) =>
   });
 
 describe("TurnProcessor", () => {
+  it("アンカの渦潮はターン開始・終了で減少しない", () => {
+    const combatant = createCombatant({
+      statuses: new StatusSet({ Anka: { stack: 5, pending: 0 } }),
+    });
+
+    TurnProcessor.turnStart(combatant);
+    TurnProcessor.turnEnd(combatant);
+
+    expect(combatant.statuses.getStack("Anka")).toBe(5);
+  });
+
   it("turnStart で pending が stack にコミットされ、pending が 0 になる", () => {
     const statuses = new StatusSet({
       Burned: { stack: 1, pending: 2 },

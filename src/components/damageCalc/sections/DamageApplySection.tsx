@@ -98,6 +98,12 @@ export const DamageApplySection = ({ tokens, model, actions }: Props) => {
                     被ダメージ +{receiverPreview.whitePercentage}%
                   </span>
                 )}
+                {receiverPreview.ankaStack > 0 && (
+                  <span className="ponkotu-damage__preview">
+                    アンカの渦潮 {receiverPreview.ankaStack}: 被ダメージ
+                    +{receiverPreview.ankaPercentage}%
+                  </span>
+                )}
               </>
             )}
           </label>

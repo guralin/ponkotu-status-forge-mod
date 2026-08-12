@@ -96,12 +96,17 @@ attackerSpecialPercentage = attackerSpecialBase + attackerBonusSpecial
 receiverNormalPercentage =
   Protection * 10
   - Vulnerable * 10
+  - Anka * 5
   - receiverWhitePercentage
 ```
 
 - `Protection` 1 スタックにつき被ダメージ -10%
 - `Vulnerable` 1 スタックにつき被ダメージ +10%
+- `Anka`（アンカの渦潮）1 スタックにつき被ダメージ +5%（最大5スタック）
 - `receiverWhitePercentage` は白化の与ダメージ補正と同じ人数規則で算出する
+
+アンカの渦潮は `stackAnka` へ即時付与し、5を超える値は読み込み時・付与時とも
+5へ制限する。予約スタックおよびターン開始・終了時の自動減少は持たない。
 
 ### 5. 防御者の特殊倍率
 
@@ -269,6 +274,6 @@ nextSink = floor(sink / 2)
 - `calcAttackerCriticalChancePreview(attacker)`
   - `min(Poise * 5 + Sword, 100)`
 - `calcReceiverNormalPreview(receiver)`
-  - `Protection * 10 - Vulnerable * 10`
+  - `Protection * 10 - Vulnerable * 10 - Anka * 5`
 - `calcReceiverSpecialPreview(receiver)`
   - `constitution <= 0 ? -100 : (isPlayer ? resist : resistEnemy)`

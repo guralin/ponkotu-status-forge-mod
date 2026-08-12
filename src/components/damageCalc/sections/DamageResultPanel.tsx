@@ -21,6 +21,12 @@ export const DamageResultPanel = ({ result }: Props) => (
         +{result.receiverWhiteEffect.percentage}%
       </div>
     )}
+    {result.receiverAnkaEffect.stack > 0 && (
+      <div>
+        アンカの渦潮 {result.receiverAnkaEffect.stack}: 被ダメージ +
+        {result.receiverAnkaEffect.percentage}%
+      </div>
+    )}
     <div>
       通常倍率: 攻撃者 {result.attackerNormalPercentage}% / 防御者{" "}
       {result.receiverNormalPercentage}% → 係数 {result.normalRatio.toFixed(2)}

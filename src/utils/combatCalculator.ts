@@ -3,6 +3,10 @@ import {
   calculateWhiteEffect,
   type WhiteEffect,
 } from "../domain/combat/WhiteEffect";
+import {
+  calculateAnkaEffect,
+  type AnkaEffect,
+} from "../domain/status/Anka";
 import { type StatusId } from "../domain/status/types/StatusId";
 import { statusDefinitions } from "../domain/status/StatusDefinitions";
 import {
@@ -30,6 +34,7 @@ export type DamageInput = {
 export type DamageResult = {
   attackerWhiteEffect: WhiteEffect;
   receiverWhiteEffect: WhiteEffect;
+  receiverAnkaEffect: AnkaEffect;
   attackerNormalPercentage: number;
   attackerSpecialPercentage: number;
   receiverNormalPercentage: number;
@@ -104,7 +109,8 @@ const calcAttackerSpecial = (
 const calcReceiverNormal = (receiver: Combatant): number => {
   const protection = receiver.statuses.getStack("Protection");
   const vulnerable = receiver.statuses.getStack("Vulnerable");
-  return protection * 10 - vulnerable * 10;
+  const ankaEffect = calculateAnkaEffect(receiver);
+  return protection * 10 - vulnerable * 10 - ankaEffect.percentage;
 };
 
 const calcReceiverSpecial = (receiver: Combatant): number => {
@@ -176,6 +182,7 @@ const computeDamage = (
     input.receiver,
     sceneCombatants,
   );
+  const receiverAnkaEffect = calculateAnkaEffect(input.receiver);
   const attackerNormalPercentage =
     calcAttackerNormal(input.attacker, directcheck) +
     (input.attackerBonusNormal ?? 0) +
@@ -204,6 +211,7 @@ const computeDamage = (
   return {
     attackerWhiteEffect,
     receiverWhiteEffect,
+    receiverAnkaEffect,
     attackerNormalPercentage,
     attackerSpecialPercentage,
     receiverNormalPercentage,
