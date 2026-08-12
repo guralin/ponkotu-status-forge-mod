@@ -5,6 +5,9 @@ export type CombatantFlags = {
   checkNk: boolean;
   checkAnri: boolean;
   checkHitan: boolean;
+  checkWhiteAlly: boolean;
+  checkWhiteLeader: boolean;
+  checkWhiteEnemy: boolean;
 };
 
 export type CombatantParams = {
@@ -60,6 +63,9 @@ export class Combatant {
       checkNk: params.flags?.checkNk ?? false,
       checkAnri: params.flags?.checkAnri ?? false,
       checkHitan: params.flags?.checkHitan ?? false,
+      checkWhiteAlly: params.flags?.checkWhiteAlly ?? false,
+      checkWhiteLeader: params.flags?.checkWhiteLeader ?? false,
+      checkWhiteEnemy: params.flags?.checkWhiteEnemy ?? false,
     };
     this.name = params.name;
   }
@@ -84,6 +90,14 @@ export class Combatant {
         this.hp = previous - applied;
       }
     }
+  }
+
+  isWhite(): boolean {
+    return (
+      this.flags.checkWhiteAlly ||
+      this.flags.checkWhiteLeader ||
+      this.flags.checkWhiteEnemy
+    );
   }
 
   applyConstitutionDamage(amount: number): void {

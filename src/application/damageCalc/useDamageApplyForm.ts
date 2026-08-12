@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { type TokenOption } from "../../components/damageCalc/types";
 import { type Combatant } from "../../domain/combat/Combatant";
+import { calculateWhiteEffect } from "../../domain/combat/WhiteEffect";
 import { CombatantRepository } from "../../repository/CombatantRepository";
+import { type CombatantRecord } from "../../repository/ICombatantRepository";
 import { TOKEN_DISPOSITIONS } from "../../components/damageCalc/tokenDispositions";
 import {
   applyDamage,
@@ -21,10 +23,21 @@ const pickDefaultReceiver = (list: TokenOption[], attackerId: string) =>
   list.find((token) => token.actorId !== attackerId)?.actorId ??
   "";
 
+const loadSceneCombatantRecords = (
+  tokens: TokenOption[],
+  repository: CombatantRepository,
+): CombatantRecord[] =>
+  Array.from(new Set(tokens.map((token) => token.actorId)))
+    .map((actorId) => repository.loadByActorId(actorId))
+    .filter((record): record is CombatantRecord => record !== null);
+
 export type CombatantPreview = {
   normal: number;
   special: number;
   criticalChance?: number;
+  whiteApplies: boolean;
+  whiteOtherCount: number;
+  whitePercentage: number;
 };
 
 export type DamageApplyFormState = {
@@ -57,8 +70,7 @@ export const useDamageApplyForm = (tokens: TokenOption[]): DamageApplyFormState 
   const [result, setResult] = useState<DamageResult | null>(null);
   const [running, setRunning] = useState(false);
 
-  const [attackerCombatant, setAttackerCombatant] = useState<Combatant | null>(null);
-  const [receiverCombatant, setReceiverCombatant] = useState<Combatant | null>(null);
+  const [sceneCombatants, setSceneCombatants] = useState<Combatant[]>([]);
 
   const tokenMap = useMemo(() => {
     const map = new Map<string, TokenOption>();
@@ -93,51 +105,60 @@ export const useDamageApplyForm = (tokens: TokenOption[]): DamageApplyFormState 
   }, [tokens, attackerId, receiverId]);
 
   useEffect(() => {
-    if (!attackerId) {
-      setAttackerCombatant(null);
-      return;
-    }
     try {
       const repository = new CombatantRepository();
-      const record = repository.loadByActorId(attackerId);
-      setAttackerCombatant(record?.combatant ?? null);
+      setSceneCombatants(
+        loadSceneCombatantRecords(tokens, repository).map(
+          (record) => record.combatant,
+        ),
+      );
     } catch {
-      setAttackerCombatant(null);
+      setSceneCombatants([]);
     }
-  }, [attackerId]);
+  }, [tokens]);
 
-  useEffect(() => {
-    if (!receiverId) {
-      setReceiverCombatant(null);
-      return;
-    }
-    try {
-      const repository = new CombatantRepository();
-      const record = repository.loadByActorId(receiverId);
-      setReceiverCombatant(record?.combatant ?? null);
-    } catch {
-      setReceiverCombatant(null);
-    }
-  }, [receiverId]);
+  const attackerCombatant = useMemo(
+    () =>
+      sceneCombatants.find((combatant) => combatant.id === attackerId) ?? null,
+    [sceneCombatants, attackerId],
+  );
+  const receiverCombatant = useMemo(
+    () =>
+      sceneCombatants.find((combatant) => combatant.id === receiverId) ?? null,
+    [sceneCombatants, receiverId],
+  );
 
   const attackerPreview = useMemo<CombatantPreview | null>(() => {
     if (!attackerCombatant) return null;
     const bonusNormalNum = Number(bonusNormal) || 0;
     const bonusSpecialNum = Number(bonusSpecial) || 0;
+    const whiteEffect = calculateWhiteEffect(attackerCombatant, sceneCombatants);
     return {
-      normal: calcAttackerNormalPreview(attackerCombatant) + (directcheck ? 50 : 0) + bonusNormalNum,
+      normal:
+        calcAttackerNormalPreview(attackerCombatant) +
+        (directcheck ? 50 : 0) +
+        bonusNormalNum +
+        whiteEffect.percentage,
       special: bonusSpecialNum,
       criticalChance: calcAttackerCriticalChancePreview(attackerCombatant),
+      whiteApplies: whiteEffect.applies,
+      whiteOtherCount: whiteEffect.otherWhiteCount,
+      whitePercentage: whiteEffect.percentage,
     };
-  }, [attackerCombatant, directcheck, bonusNormal, bonusSpecial]);
+  }, [attackerCombatant, sceneCombatants, directcheck, bonusNormal, bonusSpecial]);
 
   const receiverPreview = useMemo<CombatantPreview | null>(() => {
     if (!receiverCombatant) return null;
+    const whiteEffect = calculateWhiteEffect(receiverCombatant, sceneCombatants);
     return {
-      normal: calcReceiverNormalPreview(receiverCombatant),
+      normal:
+        calcReceiverNormalPreview(receiverCombatant) - whiteEffect.percentage,
       special: calcReceiverSpecialPreview(receiverCombatant),
+      whiteApplies: whiteEffect.applies,
+      whiteOtherCount: whiteEffect.otherWhiteCount,
+      whitePercentage: whiteEffect.percentage,
     };
-  }, [receiverCombatant]);
+  }, [receiverCombatant, sceneCombatants]);
 
   const run = async () => {
     const base = Number(baseDamage);
@@ -161,8 +182,12 @@ export const useDamageApplyForm = (tokens: TokenOption[]): DamageApplyFormState 
     try {
       setRunning(true);
       const repository = new CombatantRepository();
-      const attackerRecord = repository.loadByActorId(attackerId);
-      const receiverRecord = repository.loadByActorId(receiverId);
+      const sceneRecords = loadSceneCombatantRecords(tokens, repository);
+      const sceneRecordMap = new Map(
+        sceneRecords.map((record) => [record.actorId, record]),
+      );
+      const attackerRecord = sceneRecordMap.get(attackerId);
+      const receiverRecord = sceneRecordMap.get(receiverId);
       if (!attackerRecord || !receiverRecord) {
         ui.notifications?.error("攻撃者または防御者のデータを取得できませんでした");
         return;
@@ -175,6 +200,7 @@ export const useDamageApplyForm = (tokens: TokenOption[]): DamageApplyFormState 
         applyDamage({
           attacker: attackerRecord.combatant,
           receiver: receiverRecord.combatant,
+          sceneCombatants: sceneRecords.map((record) => record.combatant),
           baseDamage: base,
           directcheck,
           attackerBonusNormal: bonusNormalNum,
@@ -190,6 +216,8 @@ export const useDamageApplyForm = (tokens: TokenOption[]): DamageApplyFormState 
 ${attacker.name} → ${receiver.name}<br/>
 ${calcResult.criticalHit ? "クリティカル発生!!<br/>" : ""}
 基礎ダメージ: ${base}<br/>
+${calcResult.attackerWhiteEffect.applies ? `白化（他の味方${calcResult.attackerWhiteEffect.otherWhiteCount}人）: 与ダメージ +${calcResult.attackerWhiteEffect.percentage}%<br/>` : ""}
+${calcResult.receiverWhiteEffect.applies ? `白化（他の味方${calcResult.receiverWhiteEffect.otherWhiteCount}人）: 被ダメージ +${calcResult.receiverWhiteEffect.percentage}%<br/>` : ""}
 HPダメージ: ${calcResult.hpDamageApplied} (バリア吸収: ${calcResult.barrierAbsorbed})<br/>
 混乱ダメージ: ${calcResult.confDamageApplied}<br/>
 SANダメージ(沈潜): ${calcResult.sanDamageApplied}<br/>

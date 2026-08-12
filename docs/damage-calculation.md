@@ -23,6 +23,7 @@
 | --- | --- | --- |
 | `attacker` | `Combatant` | 攻撃者 |
 | `receiver` | `Combatant` | 防御者 |
+| `sceneCombatants` | `ReadonlyArray<Combatant> \| undefined` | 実行時点のシーン上戦闘参加者。白化人数の集計に使用 |
 | `baseDamage` | `number` | 基礎ダメージ |
 | `directcheck` | `boolean \| undefined` | 直接攻撃判定。未指定時は `false` |
 | `attackerBonusNormal` | `number \| undefined` | 攻撃者の通常倍率への追加補正(%) |
@@ -44,11 +45,28 @@ attackerNormalPercentage =
   - DamageDown * 10
   + (directcheck ? 50 : 0)
   + attackerBonusNormal
+  + attackerWhitePercentage
 ```
 
 - `DamageUp` 1 スタックにつき +10%
 - `DamageDown` 1 スタックにつき -10%
 - `directcheck = true` のとき固定で +50%
+
+#### 白化の与ダメージ補正
+
+`isPlayer = true` かつ `checkWhiteAlly` / `checkWhiteLeader` / `checkWhiteEnemy`
+のいずれかが真の攻撃者に適用する。
+
+```text
+attackerWhitePercentage =
+  シーン上にいる自分以外の白化プレイヤー数 * 5
+```
+
+- Actor ID で重複を除外する
+- HP を条件にしないため死亡者も人数に含む
+- 非表示トークンも人数に含む
+- 敵 (`isPlayer = false`) は人数にも効果対象にも含めない
+- 算出値を Actor のステータスへ保存しない
 
 ### 2. クリティカル率
 
@@ -75,11 +93,15 @@ attackerSpecialPercentage = attackerSpecialBase + attackerBonusSpecial
 ### 4. 防御者の通常倍率
 
 ```text
-receiverNormalPercentage = Protection * 10 - Vulnerable * 10
+receiverNormalPercentage =
+  Protection * 10
+  - Vulnerable * 10
+  - receiverWhitePercentage
 ```
 
 - `Protection` 1 スタックにつき被ダメージ -10%
 - `Vulnerable` 1 スタックにつき被ダメージ +10%
+- `receiverWhitePercentage` は白化の与ダメージ補正と同じ人数規則で算出する
 
 ### 5. 防御者の特殊倍率
 

@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { Combatant } from "../src/domain/combat/Combatant";
+import {
+  Combatant,
+  type CombatantParams,
+} from "../src/domain/combat/Combatant";
 import { StatusSet } from "../src/domain/status/StatusSet";
 import {
   applyDamage,
@@ -10,7 +13,7 @@ import {
   calcReceiverSpecialPreview,
 } from "../src/utils/combatCalculator";
 
-const createActor = (overrides?: Partial<Combatant>): Combatant =>
+const createActor = (overrides?: Partial<CombatantParams>): Combatant =>
   new Combatant({
     id: "dummy-id",
     name: "dummy",
@@ -31,6 +34,75 @@ const createActor = (overrides?: Partial<Combatant>): Combatant =>
   });
 
 describe("combatCalculator", () => {
+  it("白化した攻撃者と防御者の補正を通常倍率へ同時に加算する", () => {
+    const attacker = createActor({
+      id: "attacker",
+      isPlayer: true,
+      flags: { checkWhiteAlly: true },
+    });
+    const receiver = createActor({
+      id: "receiver",
+      isPlayer: true,
+      hp: 200,
+      constitution: 200,
+      flags: { checkWhiteLeader: true },
+    });
+
+    const { result } = applyDamage(
+      {
+        attacker,
+        receiver,
+        sceneCombatants: [attacker, receiver],
+        baseDamage: 100,
+      },
+      { random: () => 0.999 },
+    );
+
+    expect(result.attackerWhiteEffect).toEqual({
+      applies: true,
+      otherWhiteCount: 1,
+      percentage: 5,
+    });
+    expect(result.receiverWhiteEffect).toEqual({
+      applies: true,
+      otherWhiteCount: 1,
+      percentage: 5,
+    });
+    expect(result.attackerNormalPercentage).toBe(5);
+    expect(result.receiverNormalPercentage).toBe(-5);
+    expect(result.dealDamage).toBeCloseTo(110, 5);
+    expect(result.dealConfDamage).toBeCloseTo(110, 5);
+    expect(result.hpDamageApplied).toBe(110);
+    expect(result.confDamageApplied).toBe(110);
+  });
+
+  it("白化フラグを持つ敵には白化補正を適用しない", () => {
+    const attacker = createActor({
+      id: "enemy-1",
+      isPlayer: false,
+      flags: { checkWhiteEnemy: true },
+    });
+    const otherEnemy = createActor({
+      id: "enemy-2",
+      isPlayer: false,
+      flags: { checkWhiteEnemy: true },
+    });
+    const receiver = createActor({ id: "receiver", hp: 100 });
+
+    const { result } = applyDamage(
+      {
+        attacker,
+        receiver,
+        sceneCombatants: [attacker, otherEnemy, receiver],
+        baseDamage: 10,
+      },
+      { random: () => 0.999 },
+    );
+
+    expect(result.attackerWhiteEffect.applies).toBe(false);
+    expect(result.attackerNormalPercentage).toBe(0);
+  });
+
   it("applyDamage が倍率とダメージを決定的に計算できる", () => {
     const attacker = createActor({
       statuses: new StatusSet({

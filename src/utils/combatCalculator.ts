@@ -1,4 +1,8 @@
 import { type Combatant } from "../domain/combat/Combatant";
+import {
+  calculateWhiteEffect,
+  type WhiteEffect,
+} from "../domain/combat/WhiteEffect";
 import { type StatusId } from "../domain/status/types/StatusId";
 import { statusDefinitions } from "../domain/status/StatusDefinitions";
 import {
@@ -12,6 +16,8 @@ const statusDefinitionList =
 export type DamageInput = {
   attacker: Combatant;
   receiver: Combatant;
+  /** ダメージ実行時点のシーン上戦闘参加者 */
+  sceneCombatants?: ReadonlyArray<Combatant>;
   baseDamage: number;
   /** 直接攻撃判定（デフォルト false） */
   directcheck?: boolean;
@@ -22,6 +28,8 @@ export type DamageInput = {
 };
 
 export type DamageResult = {
+  attackerWhiteEffect: WhiteEffect;
+  receiverWhiteEffect: WhiteEffect;
   attackerNormalPercentage: number;
   attackerSpecialPercentage: number;
   receiverNormalPercentage: number;
@@ -144,20 +152,40 @@ export type DamageCalcOptions = {
   random?: () => number;
 };
 
+const ceilDamage = (value: number): number => {
+  const nearestInteger = Math.round(value);
+  const tolerance =
+    Number.EPSILON * Math.max(1, Math.abs(value)) * 8;
+  const normalized =
+    Math.abs(value - nearestInteger) <= tolerance ? nearestInteger : value;
+  return Math.ceil(normalized);
+};
+
 const computeDamage = (
   input: DamageInput,
   options: DamageCalcOptions = {}
 ) => {
   const random = options.random ?? Math.random;
   const directcheck = input.directcheck ?? false;
+  const sceneCombatants = input.sceneCombatants ?? [];
+  const attackerWhiteEffect = calculateWhiteEffect(
+    input.attacker,
+    sceneCombatants,
+  );
+  const receiverWhiteEffect = calculateWhiteEffect(
+    input.receiver,
+    sceneCombatants,
+  );
   const attackerNormalPercentage =
     calcAttackerNormal(input.attacker, directcheck) +
-    (input.attackerBonusNormal ?? 0);
+    (input.attackerBonusNormal ?? 0) +
+    attackerWhiteEffect.percentage;
   const { special: attackerSpecialBase, criticalHit } =
     calcAttackerSpecial(input.attacker, random);
   const attackerSpecialPercentage =
     attackerSpecialBase + (input.attackerBonusSpecial ?? 0);
-  const receiverNormalPercentage = calcReceiverNormal(input.receiver);
+  const receiverNormalPercentage =
+    calcReceiverNormal(input.receiver) - receiverWhiteEffect.percentage;
   const receiverSpecialPercentage = calcReceiverSpecial(input.receiver);
   const receiverSpecialConfPercentage = calcReceiverSpecialConf(input.receiver);
 
@@ -174,6 +202,8 @@ const computeDamage = (
     input.baseDamage * Math.max(normalRatio, 0) * Math.max(specialConfRatio, 0);
 
   return {
+    attackerWhiteEffect,
+    receiverWhiteEffect,
     attackerNormalPercentage,
     attackerSpecialPercentage,
     receiverNormalPercentage,
@@ -203,8 +233,8 @@ export const applyDamage = (
   let nextStacksink = receiver.statuses.getStack("Sink");
   const isDoubleConstitution = receiver.doubleConstitution;
 
-  const hpDamageCeil = Math.ceil(calc.dealDamage);
-  const confDamageCeil = Math.ceil(calc.dealConfDamage);
+  const hpDamageCeil = ceilDamage(calc.dealDamage);
+  const confDamageCeil = ceilDamage(calc.dealConfDamage);
 
   let barrierAbsorbed = 0;
   let hpDamageApplied = 0;

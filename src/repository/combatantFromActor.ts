@@ -66,6 +66,9 @@ export const combatantFromActor = (actor: Actor): Combatant => {
       checkNk: getAttrValue(actor, "checknk", 0) > 0,
       checkAnri: getAttrValue(actor, "checkAnri", 0) > 0,
       checkHitan: getAttrValue(actor, "checkhitan", 0) > 0,
+      checkWhiteAlly: getAttrValue(actor, "checkWhiteAlly", 0) > 0,
+      checkWhiteLeader: getAttrValue(actor, "checkWhiteLeader", 0) > 0,
+      checkWhiteEnemy: getAttrValue(actor, "checkWhiteEnemy", 0) > 0,
     },
   });
 };

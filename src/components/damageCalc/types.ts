@@ -32,9 +32,20 @@ export type CombatantPreviewViewModel = {
   normal: number;
   special: number;
   criticalChance?: number;
+  whiteApplies: boolean;
+  whiteOtherCount: number;
+  whitePercentage: number;
+};
+
+export type WhiteEffectViewModel = {
+  applies: boolean;
+  otherWhiteCount: number;
+  percentage: number;
 };
 
 export type DamageResultViewModel = {
+  attackerWhiteEffect: WhiteEffectViewModel;
+  receiverWhiteEffect: WhiteEffectViewModel;
   attackerNormalPercentage: number;
   receiverNormalPercentage: number;
   normalRatio: number;
