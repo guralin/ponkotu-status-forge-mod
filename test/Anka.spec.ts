@@ -14,6 +14,7 @@ const createCombatant = (statuses: StatusSet): Combatant =>
     maxHp: 100,
     barrier: 0,
     constitution: 20,
+    maxConstitution: 20,
     san: 0,
     isPlayer: false,
     resist: 0,

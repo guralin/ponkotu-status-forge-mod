@@ -20,6 +20,7 @@ export const statusIds = [
   "FEOAwaken",
   "Witch1",
   "Anka",
+  "BlueMoon",
   "Frenzy",
   "Sinsyoku",
   "Biribiri",

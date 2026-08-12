@@ -26,6 +26,7 @@ const createActor = (overrides?: Partial<CombatantParams>): Combatant =>
     maxHp: 0,
     barrier: 0,
     constitution: 0,
+    maxConstitution: 0,
     san: 0,
     doubleConstitution: false,
     statuses: new StatusSet(),

@@ -18,6 +18,7 @@ const createCombatant = (overrides?: Partial<Combatant>) =>
     maxHp: 100,
     barrier: 0,
     constitution: 20,
+    maxConstitution: 20,
     san: 10,
     isPlayer: false,
     resist: 0,

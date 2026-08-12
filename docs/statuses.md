@@ -26,6 +26,7 @@
 - `stackSmokeGrand`: 濃密な煙。30 以上あるとターン開始時に威力上昇付与の条件になる。
 - `stackFEOAwaken`: 覚醒。ターン終了時に 1 減少。
 - `stackregen`: 再生。ターン終了時に 1 減少。ターン開始時に回復量へ使用。
+- `stackBlueMoon`: 碧月。生存中のターン開始時に最大20まで1増加し、増加後スタックの1/4（切り上げ）だけHPと混乱抵抗値を回復。
 - `stackbind`: 束縛。ターン終了時に 0。
 - `stackParalysis` / `stackFear`: 麻痺/恐怖。ターン終了時に 0。
 - `stackDamageUp` / `stackDamageDown` / `stackPowerUp` / `stackPowerDown` / `stackProtection` / `stackVulnerable`: バフ/デバフ各種。ターン終了時に 0。
@@ -41,6 +42,7 @@
 ## ターン開始時に処理されるステータス（`EndProcess` turnStart）
 - 付与予約（`xxxnext`）: `stackBleedingnext`, `stackBurnednext`, `stackPoisonnext`, `stackPowerUpnext`, `stackProtectionnext`, `stackDamageUpnext`, `stackPowerDownnext`, `stackVulnerablenext`, `stackDamageDownnext`, `stackFearnext`, `stackParalysisnext`, `stackpoisenext`（呼吸）, `stacktremornext`, `stacksinknext`, `stackbindnext`, `stackregennext`, `stackbiribirinext`, `stackFEOAwakenNext` を本体スタックに加算して 0 に戻す。
 - `stackregen`: 回復処理。最大 HP の 5% × スタック分を回復（スタックはこのタイミングでは減らさない）。
+- `stackBlueMoon`: 1以上かつHPが1以上なら、最大20まで+1した後、`ceil(stack / 4)`だけHPと`constitution`を各最大値まで回復。HP 0では増加・回復とも停止。
 - `stackregennext`: 再生スタックの追加予約。ターン開始で `stackregen` に変換。
 - `stackbindnext`: 束縛付与予約。ターン開始で `stackbind` へ。
 - `stackBleedingnext` / `stackPoisonnext` / `stackBurnednext`: 出血/毒/やけど付与予約。ターン開始で各本体スタックへ。
@@ -65,5 +67,10 @@
 - `checkSora`: 煙付与と煙による威力上昇のトリガー。
 - `checkseikou`: 1 につきランダムなプレイヤーに 1〜2 回復を行う回数。
 - `checkhitan`: 悲嘆。保護スタックを最低 1 にする。
+
+## 回復の共通ルール
+
+- HP 0 は死亡として扱い、`healHp` を使う通常回復では復活しない。
+- 混乱抵抗値の回復上限は `constitution.max`。未設定または0なら現在値を実効上限とする。
 
 （上記にないステータスが追加された場合は、このファイルに追記してください）

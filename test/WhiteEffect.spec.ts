@@ -19,6 +19,7 @@ const createCombatant = (
     maxHp: 100,
     barrier: 0,
     constitution: 10,
+    maxConstitution: 10,
     san: 0,
     isPlayer: true,
     resist: 0,

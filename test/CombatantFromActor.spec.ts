@@ -9,6 +9,30 @@ const createActor = (attributes: Record<string, unknown>): Actor =>
   }) as unknown as Actor;
 
 describe("combatantFromActor", () => {
+  it("stackBlueMoonとconstitution.maxを読み込み、各上限を反映する", () => {
+    const actor = createActor({
+      constitution: { value: 12, max: 42 },
+      stackBlueMoon: { value: 25 },
+    });
+
+    const combatant = combatantFromActor(actor);
+
+    expect(combatant.maxConstitution).toBe(42);
+    expect(combatant.statuses.getStack("BlueMoon")).toBe(20);
+  });
+
+  it("constitution.maxがないか0なら現在値を実効上限にする", () => {
+    const missingMax = combatantFromActor(
+      createActor({ constitution: { value: 12 } }),
+    );
+    const zeroMax = combatantFromActor(
+      createActor({ constitution: { value: 15, max: 0 } }),
+    );
+
+    expect(missingMax.maxConstitution).toBe(12);
+    expect(zeroMax.maxConstitution).toBe(15);
+  });
+
   it("stackAnkaを読み込み時に5スタックへ制限する", () => {
     const actor = createActor({
       stackAnka: { value: 9 },
