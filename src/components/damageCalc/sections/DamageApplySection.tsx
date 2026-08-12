@@ -59,12 +59,20 @@ export const DamageApplySection = ({ tokens, model, actions }: Props) => {
               ))}
             </select>
             {attackerPreview !== null && (
-              <span className="ponkotu-damage__preview">
-                通常 {formatPercentage(attackerPreview.normal)} / 特殊 {formatPercentage(attackerPreview.special)}
-                {(attackerPreview.criticalChance ?? 0) >= 1
-                  ? ` / Crit + ${attackerPreview.criticalChance} %`
-                  : ""}
-              </span>
+              <>
+                <span className="ponkotu-damage__preview">
+                  通常 {formatPercentage(attackerPreview.normal)} / 特殊 {formatPercentage(attackerPreview.special)}
+                  {(attackerPreview.criticalChance ?? 0) >= 1
+                    ? ` / Crit + ${attackerPreview.criticalChance} %`
+                    : ""}
+                </span>
+                {attackerPreview.whiteApplies && (
+                  <span className="ponkotu-damage__preview">
+                    白化（他の味方{attackerPreview.whiteOtherCount}人）:
+                    与ダメージ +{attackerPreview.whitePercentage}%
+                  </span>
+                )}
+              </>
             )}
           </label>
         </div>
@@ -80,9 +88,23 @@ export const DamageApplySection = ({ tokens, model, actions }: Props) => {
               ))}
             </select>
             {receiverPreview !== null && (
-              <span className="ponkotu-damage__preview">
-                通常 {formatPercentage(receiverPreview.normal)} / 特殊 {formatPercentage(receiverPreview.special)}
-              </span>
+              <>
+                <span className="ponkotu-damage__preview">
+                  通常 {formatPercentage(receiverPreview.normal)} / 特殊 {formatPercentage(receiverPreview.special)}
+                </span>
+                {receiverPreview.whiteApplies && (
+                  <span className="ponkotu-damage__preview">
+                    白化（他の味方{receiverPreview.whiteOtherCount}人）:
+                    被ダメージ +{receiverPreview.whitePercentage}%
+                  </span>
+                )}
+                {receiverPreview.ankaStack > 0 && (
+                  <span className="ponkotu-damage__preview">
+                    アンカの渦潮 {receiverPreview.ankaStack}: 被ダメージ
+                    +{receiverPreview.ankaPercentage}%
+                  </span>
+                )}
+              </>
             )}
           </label>
         </div>

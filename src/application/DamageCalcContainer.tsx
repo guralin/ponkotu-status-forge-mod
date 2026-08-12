@@ -12,6 +12,9 @@ import { useDamageApplyForm } from "./damageCalc/useDamageApplyForm";
 import { useTurnProcessForm } from "./damageCalc/useTurnProcessForm";
 
 const toDamageResultViewModel = (result: DamageResult): DamageResultViewModel => ({
+  attackerWhiteEffect: result.attackerWhiteEffect,
+  receiverWhiteEffect: result.receiverWhiteEffect,
+  receiverAnkaEffect: result.receiverAnkaEffect,
   attackerNormalPercentage: result.attackerNormalPercentage,
   receiverNormalPercentage: result.receiverNormalPercentage,
   normalRatio: result.normalRatio,

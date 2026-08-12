@@ -10,6 +10,7 @@ const createCombatant = (overrides?: Partial<Combatant>) =>
     maxHp: 100,
     barrier: 0,
     constitution: 30,
+    maxConstitution: 30,
     san: 0,
     isPlayer: false,
     resist: 0,
@@ -23,6 +24,17 @@ const createCombatant = (overrides?: Partial<Combatant>) =>
   });
 
 describe("TurnProcessor", () => {
+  it("アンカの渦潮はターン開始・終了で減少しない", () => {
+    const combatant = createCombatant({
+      statuses: new StatusSet({ Anka: { stack: 5, pending: 0 } }),
+    });
+
+    TurnProcessor.turnStart(combatant);
+    TurnProcessor.turnEnd(combatant);
+
+    expect(combatant.statuses.getStack("Anka")).toBe(5);
+  });
+
   it("turnStart で pending が stack にコミットされ、pending が 0 になる", () => {
     const statuses = new StatusSet({
       Burned: { stack: 1, pending: 2 },
@@ -89,6 +101,17 @@ describe("TurnProcessor", () => {
     TurnProcessor.turnEnd(combatant);
     expect(combatant.statuses.getStack("Regen")).toBe(1);
     expect(combatant.hp).toBe(60);
+  });
+
+  it("Regen はHP 0の死亡者を回復しない", () => {
+    const combatant = createCombatant({
+      hp: 0,
+      statuses: new StatusSet({ Regen: { stack: 2, pending: 0 } }),
+    });
+
+    TurnProcessor.turnStart(combatant);
+
+    expect(combatant.hp).toBe(0);
   });
 
   it("Sword は turnEnd で減少しない", () => {

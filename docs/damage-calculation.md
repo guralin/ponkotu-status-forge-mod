@@ -23,6 +23,7 @@
 | --- | --- | --- |
 | `attacker` | `Combatant` | 攻撃者 |
 | `receiver` | `Combatant` | 防御者 |
+| `sceneCombatants` | `ReadonlyArray<Combatant> \| undefined` | 実行時点のシーン上戦闘参加者。白化人数の集計に使用 |
 | `baseDamage` | `number` | 基礎ダメージ |
 | `directcheck` | `boolean \| undefined` | 直接攻撃判定。未指定時は `false` |
 | `attackerBonusNormal` | `number \| undefined` | 攻撃者の通常倍率への追加補正(%) |
@@ -44,11 +45,28 @@ attackerNormalPercentage =
   - DamageDown * 10
   + (directcheck ? 50 : 0)
   + attackerBonusNormal
+  + attackerWhitePercentage
 ```
 
 - `DamageUp` 1 スタックにつき +10%
 - `DamageDown` 1 スタックにつき -10%
 - `directcheck = true` のとき固定で +50%
+
+#### 白化の与ダメージ補正
+
+`isPlayer = true` かつ `checkWhiteAlly` / `checkWhiteLeader` / `checkWhiteEnemy`
+のいずれかが真の攻撃者に適用する。
+
+```text
+attackerWhitePercentage =
+  シーン上にいる自分以外の白化プレイヤー数 * 5
+```
+
+- Actor ID で重複を除外する
+- HP を条件にしないため死亡者も人数に含む
+- 非表示トークンも人数に含む
+- 敵 (`isPlayer = false`) は人数にも効果対象にも含めない
+- 算出値を Actor のステータスへ保存しない
 
 ### 2. クリティカル率
 
@@ -75,11 +93,20 @@ attackerSpecialPercentage = attackerSpecialBase + attackerBonusSpecial
 ### 4. 防御者の通常倍率
 
 ```text
-receiverNormalPercentage = Protection * 10 - Vulnerable * 10
+receiverNormalPercentage =
+  Protection * 10
+  - Vulnerable * 10
+  - Anka * 5
+  - receiverWhitePercentage
 ```
 
 - `Protection` 1 スタックにつき被ダメージ -10%
 - `Vulnerable` 1 スタックにつき被ダメージ +10%
+- `Anka`（アンカの渦潮）1 スタックにつき被ダメージ +5%（最大5スタック）
+- `receiverWhitePercentage` は白化の与ダメージ補正と同じ人数規則で算出する
+
+アンカの渦潮は `stackAnka` へ即時付与し、5を超える値は読み込み時・付与時とも
+5へ制限する。予約スタックおよびターン開始・終了時の自動減少は持たない。
 
 ### 5. 防御者の特殊倍率
 
@@ -247,6 +274,6 @@ nextSink = floor(sink / 2)
 - `calcAttackerCriticalChancePreview(attacker)`
   - `min(Poise * 5 + Sword, 100)`
 - `calcReceiverNormalPreview(receiver)`
-  - `Protection * 10 - Vulnerable * 10`
+  - `Protection * 10 - Vulnerable * 10 - Anka * 5`
 - `calcReceiverSpecialPreview(receiver)`
   - `constitution <= 0 ? -100 : (isPlayer ? resist : resistEnemy)`

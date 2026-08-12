@@ -5,6 +5,9 @@ export type CombatantFlags = {
   checkNk: boolean;
   checkAnri: boolean;
   checkHitan: boolean;
+  checkWhiteAlly: boolean;
+  checkWhiteLeader: boolean;
+  checkWhiteEnemy: boolean;
 };
 
 export type CombatantParams = {
@@ -13,6 +16,7 @@ export type CombatantParams = {
   maxHp: number;
   barrier: number;
   constitution: number;
+  maxConstitution: number;
   san: number;
   isPlayer: boolean;
   resist: number;
@@ -31,6 +35,7 @@ export class Combatant {
   maxHp: number;
   barrier: number;
   constitution: number;
+  maxConstitution: number;
   san: number;
   isPlayer: boolean;
   resist: number;
@@ -48,6 +53,7 @@ export class Combatant {
     this.maxHp = params.maxHp;
     this.barrier = params.barrier;
     this.constitution = params.constitution;
+    this.maxConstitution = params.maxConstitution;
     this.san = params.san;
     this.isPlayer = params.isPlayer;
     this.resist = params.resist;
@@ -60,6 +66,9 @@ export class Combatant {
       checkNk: params.flags?.checkNk ?? false,
       checkAnri: params.flags?.checkAnri ?? false,
       checkHitan: params.flags?.checkHitan ?? false,
+      checkWhiteAlly: params.flags?.checkWhiteAlly ?? false,
+      checkWhiteLeader: params.flags?.checkWhiteLeader ?? false,
+      checkWhiteEnemy: params.flags?.checkWhiteEnemy ?? false,
     };
     this.name = params.name;
   }
@@ -86,6 +95,18 @@ export class Combatant {
     }
   }
 
+  isWhite(): boolean {
+    return (
+      this.flags.checkWhiteAlly ||
+      this.flags.checkWhiteLeader ||
+      this.flags.checkWhiteEnemy
+    );
+  }
+
+  isAlive(): boolean {
+    return this.hp > 0;
+  }
+
   applyConstitutionDamage(amount: number): void {
     const value = Math.max(0, amount);
     if (value <= 0) return;
@@ -98,6 +119,7 @@ export class Combatant {
   }
 
   healHp(amount: number): void {
+    if (!this.isAlive()) return;
     const value = Math.max(0, amount);
     if (value <= 0) return;
 
@@ -106,6 +128,18 @@ export class Combatant {
     const healed = Math.min(Math.max(maxHp - previous, 0), value);
     if (healed > 0) {
       this.hp = previous + healed;
+    }
+  }
+
+  healConstitution(amount: number): void {
+    if (!this.isAlive()) return;
+    const value = Math.max(0, amount);
+    if (value <= 0) return;
+
+    const recoverable = Math.max(this.maxConstitution - this.constitution, 0);
+    const healed = Math.min(recoverable, value);
+    if (healed > 0) {
+      this.constitution += healed;
     }
   }
 

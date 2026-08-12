@@ -37,6 +37,8 @@ export type StatusDefinition<Id extends string = string> = {
     pending?: string;
   };
   hasPending?: boolean;
+  maxStack?: number;
+  turnStartPriority?: number;
   onTurnStart?: StatusHandler<Id>;
   onTurnEnd?: StatusHandler<Id>;
   onDealDamage?: DamageStatusHandler<Id>;

@@ -18,6 +18,7 @@ const createCombatant = (overrides?: Partial<Combatant>) =>
     maxHp: 100,
     barrier: 0,
     constitution: 20,
+    maxConstitution: 20,
     san: 10,
     isPlayer: false,
     resist: 0,
@@ -62,6 +63,26 @@ const createCommand = (
 });
 
 describe("applyStatusStack", () => {
+  it("アンカの渦潮は付与しても5スタックを超えない", async () => {
+    const combatant = createCombatant({
+      statuses: new StatusSet({ Anka: { stack: 4, pending: 0 } }),
+    });
+    const repository = new FakeCombatantRepository({
+      actorId: "actor-1",
+      actor: { name: "tester" } as Actor,
+      combatant,
+    });
+
+    const result = await applyStatusStack(
+      repository,
+      createCommand({ statusId: "Anka", stackDelta: 3 }),
+    );
+
+    expect(result.before).toBe(4);
+    expect(result.after).toBe(5);
+    expect(combatant.statuses.getStack("Anka")).toBe(5);
+  });
+
   it("現在スタックに加算して保存し、前後値を返す", async () => {
     const combatant = createCombatant({
       statuses: new StatusSet({ Burned: { stack: 3, pending: 0 } }),

@@ -17,9 +17,17 @@ export class TurnProcessor {
       combatant.setStatusPending(definition.id, 0);
     });
 
-    definitions.forEach((definition) => {
-      definition.onTurnStart?.(combatant, definition.id);
-    });
+    definitions
+      .map((definition, index) => ({ definition, index }))
+      .sort(
+        (a, b) =>
+          (a.definition.turnStartPriority ?? 0) -
+            (b.definition.turnStartPriority ?? 0) ||
+          a.index - b.index,
+      )
+      .forEach(({ definition }) => {
+        definition.onTurnStart?.(combatant, definition.id);
+      });
   }
 
   static turnEnd(combatant: Combatant): void {

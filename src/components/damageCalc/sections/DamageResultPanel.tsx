@@ -9,6 +9,24 @@ type Props = {
 
 export const DamageResultPanel = ({ result }: Props) => (
   <div className="ponkotu-damage__result">
+    {result.attackerWhiteEffect.applies && (
+      <div>
+        白化（他の味方{result.attackerWhiteEffect.otherWhiteCount}人）: 与ダメージ
+        +{result.attackerWhiteEffect.percentage}%
+      </div>
+    )}
+    {result.receiverWhiteEffect.applies && (
+      <div>
+        白化（他の味方{result.receiverWhiteEffect.otherWhiteCount}人）: 被ダメージ
+        +{result.receiverWhiteEffect.percentage}%
+      </div>
+    )}
+    {result.receiverAnkaEffect.stack > 0 && (
+      <div>
+        アンカの渦潮 {result.receiverAnkaEffect.stack}: 被ダメージ +
+        {result.receiverAnkaEffect.percentage}%
+      </div>
+    )}
     <div>
       通常倍率: 攻撃者 {result.attackerNormalPercentage}% / 防御者{" "}
       {result.receiverNormalPercentage}% → 係数 {result.normalRatio.toFixed(2)}

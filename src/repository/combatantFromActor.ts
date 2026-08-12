@@ -35,6 +35,10 @@ const getAttrMax = (actor: Actor, key: string, fallback = 0): number => {
 
 export const combatantFromActor = (actor: Actor): Combatant => {
   const statuses = new StatusSet();
+  const constitution = getAttrValue(actor, "constitution", 0);
+  const rawMaxConstitution = getAttrMax(actor, "constitution", constitution);
+  const maxConstitution =
+    rawMaxConstitution > 0 ? rawMaxConstitution : constitution;
 
   const definitions =
     statusDefinitions as ReadonlyArray<StatusDefinition<StatusId>>;
@@ -53,7 +57,8 @@ export const combatantFromActor = (actor: Actor): Combatant => {
     hp: getAttrValue(actor, "hp", 0),
     maxHp: getAttrMax(actor, "hp", 0),
     barrier: getAttrValue(actor, "barrier", 0),
-    constitution: getAttrValue(actor, "constitution", 0),
+    constitution,
+    maxConstitution,
     san: getAttrValue(actor, "san", 0),
     isPlayer: getAttrValue(actor, "isPlayer", 0) > 0,
     resist: getAttrValue(actor, "resist", 0),
@@ -66,6 +71,9 @@ export const combatantFromActor = (actor: Actor): Combatant => {
       checkNk: getAttrValue(actor, "checknk", 0) > 0,
       checkAnri: getAttrValue(actor, "checkAnri", 0) > 0,
       checkHitan: getAttrValue(actor, "checkhitan", 0) > 0,
+      checkWhiteAlly: getAttrValue(actor, "checkWhiteAlly", 0) > 0,
+      checkWhiteLeader: getAttrValue(actor, "checkWhiteLeader", 0) > 0,
+      checkWhiteEnemy: getAttrValue(actor, "checkWhiteEnemy", 0) > 0,
     },
   });
 };
